@@ -2,7 +2,11 @@
   "version": 2,
   "builds": [
     { "src": "public/**/*", "use": "@vercel/static" },
-    { "src": "src/pages/**/*", "use": "@vercel/static" }
+    { "src": "src/pages/**/*", "use": "@vercel/static" },
+    { "src": "src/lib/**/*", "use": "@vercel/static" },
+    { "src": "src/pages-scripts/**/*", "use": "@vercel/static" },
+    { "src": "src/styles/**/*", "use": "@vercel/static" },
+    { "src": "src/assets/**/*", "use": "@vercel/static" }
   ],
   "routes": [
     { "src": "^/$", "dest": "/src/pages/dashboard.html" },
