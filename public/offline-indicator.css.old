@@ -1,0 +1,85 @@
+/* Indicadores para modo offline */
+
+/* Barra indicadora en la parte superior */
+body.offline-mode::before {
+  content: "Modo offline - Usando datos locales";
+  display: block;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  background-color: #ff9800;
+  color: white;
+  text-align: center;
+  padding: 5px;
+  font-size: 14px;
+  font-weight: bold;
+  z-index: 10000;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+/* Ajustar el contenido para que no quede debajo de la barra */
+body.offline-mode {
+  padding-top: 30px;
+}
+
+/* Badge indicador para elementos de UI */
+.offline-badge {
+  display: none;
+  background-color: #ff9800;
+  color: white;
+  font-size: 10px;
+  padding: 2px 6px;
+  border-radius: 10px;
+  margin-left: 5px;
+  vertical-align: middle;
+  font-weight: bold;
+}
+
+body.offline-mode .offline-badge {
+  display: inline-block;
+}
+
+/* Estilos específicos para datos mock */
+body.offline-mode .mock-data-indicator {
+  opacity: 0.7;
+}
+
+body.offline-mode .mock-data-indicator::after {
+  content: " (mock)";
+  font-size: 0.85em;
+  color: #ff9800;
+  font-style: italic;
+}
+
+/* Botón para alternar modo offline */
+#offlineToggleButton {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  background-color: #f1f1f1;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  padding: 8px 12px;
+  font-size: 12px;
+  cursor: pointer;
+  z-index: 1000;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+body.offline-mode #offlineToggleButton {
+  background-color: #ff9800;
+  color: white;
+  border-color: #e68300;
+}
+
+/* Animación cuando se cambia el modo */
+@keyframes pulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.1); }
+  100% { transform: scale(1); }
+}
+
+.mode-change {
+  animation: pulse 0.5s ease;
+}

@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Dashboard - Demo</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet"/>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <link rel="stylesheet" href="./styles.css">
+  <style> body{font-family: 'Inter',sans-serif;} </style>
+</head>
+<body class="bg-gray-100">
+  <!-- App mount point -->
+  <div id="app" class="min-h-screen"></div>
+
+  <!-- Modules -->
+  <script type="module" src="./api.mocks.js"></script>
+  <script type="module" src="./templates.js"></script>
+  <script type="module" src="/src/pages-scripts/dashboard.js"></script>
+  <script type="module" src="./session.js"></script>
+</body>
+</html>

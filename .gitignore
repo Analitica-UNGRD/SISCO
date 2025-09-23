@@ -1,0 +1,58 @@
+# Node
+node_modules/
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+*.log
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# VSCode
+.vscode/
+
+# Backups and temp
+backups/
+*.bak
+*.backup
+*.tmp
+temp/
+*.zip
+
+# Environment files
+.env
+.env.*
+
+# Build / output
+dist/
+build/
+
+# Cache
+.cache/
+
+# Ignore README files per request (do not upload any README*.md)
+README*.md
+**/README*.md
+
+# Others
+*.tgz
+*.pem
+*.key
+*.pfx
+
+# PowerShell generated files
+*.ps1xml
+
+# Ignore node installers and editors
+.idea/
+*.suo
+*.user
+
+# Ignore local preview/temp HTML
+temp_preview_content.html
+
+# Keep package-lock.json tracked for reproducible installs (not ignored)

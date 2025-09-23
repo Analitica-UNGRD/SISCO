@@ -1,0 +1,184 @@
+<!-- Preview Panel Component - Compact Modern Design -->
+<div id="previewPanel" class="preview-panel">
+  <button id="previewCloseBtn" class="preview-close-btn md:hidden">
+    <span class="material-icons">close</span>
+  </button>
+
+  <div class="preview-container">
+    <!-- Vista previa vacía cuando no hay contratista seleccionado -->
+    <div class="empty-preview" id="emptyPreview">
+      <div class="empty-preview-icon">
+        <span class="material-icons">person_search</span>
+      </div>
+      <h3 class="empty-preview-title">Sin contratista seleccionado</h3>
+      <p class="empty-preview-text">Seleccione un contratista existente utilizando el menú desplegable.</p>
+    </div>
+    
+    <!-- Vista previa del contratista -->
+    <div class="contractor-preview hidden" id="contractorPreview" role="region" aria-label="Vista previa del contratista">
+      <!-- Refresh button for contractual preview (small spinner) -->
+      <button id="contractualPreviewRefresh" class="btn-refresh contractual-refresh" title="Actualizar vista contractual" aria-label="Actualizar vista contractual">
+        <span class="material-icons">refresh</span>
+      </button>
+      
+      <!-- Header expandido con información personal -->
+      <div class="preview-header-expanded">
+        <div class="preview-photo-info">
+          <div class="preview-photo">
+            <span class="material-icons">person</span>
+          </div>
+          <div class="preview-basic-info">
+            <input id="preview-nombre" class="preview-name-input" placeholder="Nombre del contratista" readonly />
+            <div id="preview-estado-badge" class="preview-status-badge"></div>
+          </div>
+        </div>
+        
+        <!-- Información personal en el header -->
+        <div class="preview-personal-info">
+          <div class="preview-info-row">
+            <span class="material-icons">fingerprint</span>
+            <span class="preview-info-label">ID:</span>
+            <input id="preview-identificacion" class="preview-info-input" readonly />
+          </div>
+          <div class="preview-info-row">
+            <span class="material-icons">email</span>
+            <span class="preview-info-label">Correo:</span>
+            <input id="preview-correo" class="preview-info-input" readonly />
+          </div>
+          <div class="preview-info-row">
+            <span class="material-icons">groups</span>
+            <span class="preview-info-label">Grupo:</span>
+            <input id="preview-grupo-oapi" class="preview-info-input" readonly />
+          </div>
+          <div class="preview-info-row">
+            <span class="material-icons">work</span>
+            <span class="preview-info-label">Perfil:</span>
+            <input id="preview-perfil" class="preview-info-input" readonly />
+          </div>
+        </div>
+      </div>
+
+      <!-- Grid compacto de información contractual -->
+      <div class="preview-compact-grid">
+        
+        <!-- Información de Contrato -->
+        <div class="preview-compact-section">
+          <h5 class="preview-section-title">
+            <span class="material-icons">description</span>
+            Información de Contrato
+          </h5>
+          <div class="preview-mini-fields">
+            <div class="preview-mini-field">
+              <span class="material-icons">tag</span>
+              <span class="preview-field-label">Número:</span>
+              <input id="preview-contrato" class="preview-mini-input" readonly />
+            </div>
+            <div class="preview-mini-field">
+              <span class="material-icons">link</span>
+              <span class="preview-field-label">Tipo:</span>
+              <input id="preview-tipo-vinculacion" class="preview-mini-input" readonly />
+            </div>
+            <div class="preview-mini-field">
+              <span class="material-icons">event</span>
+              <span class="preview-field-label">Inicio:</span>
+              <input id="preview-inicio-contrato" class="preview-mini-input" readonly />
+            </div>
+            <div class="preview-mini-field">
+              <span class="material-icons">event_available</span>
+              <span class="preview-field-label">Fin:</span>
+              <input id="preview-fin-contrato" class="preview-mini-input" readonly />
+            </div>
+          </div>
+        </div>
+
+        <!-- Información Financiera -->
+        <div class="preview-compact-section">
+          <h5 class="preview-section-title">
+            <span class="material-icons">attach_money</span>
+            Información Financiera
+          </h5>
+          <div class="preview-mini-fields">
+            <div class="preview-mini-field">
+              <span class="material-icons">schedule</span>
+              <span class="preview-field-label">Plazo:</span>
+              <input id="preview-plazo" class="preview-mini-input" readonly />
+            </div>
+            <div class="preview-mini-field">
+              <span class="material-icons">payments</span>
+              <span class="preview-field-label">Mensual:</span>
+              <input id="preview-valor-mensual" class="preview-mini-input preview-currency" readonly />
+            </div>
+            <div class="preview-mini-field">
+              <span class="material-icons">account_balance</span>
+              <span class="preview-field-label">Total:</span>
+              <input id="preview-valor-total" class="preview-mini-input preview-currency" readonly />
+            </div>
+          </div>
+        </div>
+
+        <!-- Documentos -->
+        <div class="preview-compact-section">
+          <h5 class="preview-section-title">
+            <span class="material-icons">folder</span>
+            Documentos CDP/RC
+          </h5>
+          <div class="preview-mini-fields">
+            <div class="preview-mini-field">
+              <span class="material-icons">receipt</span>
+              <span class="preview-field-label">CDP:</span>
+              <input id="preview-cdp" class="preview-mini-input" readonly />
+            </div>
+            <div class="preview-mini-field">
+              <span class="material-icons">event</span>
+              <span class="preview-field-label">F. CDP:</span>
+              <input id="preview-fecha-cdp" class="preview-mini-input" readonly />
+            </div>
+            <div class="preview-mini-field">
+              <span class="material-icons">verified</span>
+              <span class="preview-field-label">RC:</span>
+              <input id="preview-rc" class="preview-mini-input" readonly />
+            </div>
+            <div class="preview-mini-field">
+              <span class="material-icons">event</span>
+              <span class="preview-field-label">F. RC:</span>
+              <input id="preview-fecha-rc" class="preview-mini-input" readonly />
+            </div>
+          </div>
+        </div>
+
+        <!-- Resumen de Estado -->
+        <div class="preview-compact-section">
+          <h5 class="preview-section-title">
+            <span class="material-icons">analytics</span>
+            Resumen de Estado
+          </h5>
+          <div class="preview-summary-compact">
+            <div class="preview-stat">
+              <span class="material-icons">assignment_turned_in</span>
+              <div class="preview-stat-content">
+                <span class="preview-stat-value">0/0</span>
+                <span class="preview-stat-label">Obligaciones</span>
+              </div>
+            </div>
+            <div class="preview-stat">
+              <span class="material-icons">account_balance_wallet</span>
+              <div class="preview-stat-content">
+                <span class="preview-stat-value">$0</span>
+                <span class="preview-stat-label">Pagos</span>
+              </div>
+            </div>
+            <div class="preview-stat">
+              <span class="material-icons">trending_up</span>
+              <div class="preview-stat-content">
+                <span class="preview-stat-value">0%</span>
+                <span class="preview-stat-label">Progreso</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+      
+    </div>
+  </div>
+</div>

@@ -1,0 +1,846 @@
+/**
+ * Estilos específicos para la página de Precontractual
+ */
+
+/* Estilos específicos para contenido de precontractual */
+.precontractual-content {
+    background-color: #f3f4f6;
+}
+
+.precontractual-content h1,
+.precontractual-content h2,
+.precontractual-content h3 {
+    color: #1f2937;
+}
+
+.precontractual-content p {
+    color: #6b7280;
+}
+
+/* Estilos para filtros específicos */
+.filter-section {
+    background: white;
+    border-radius: 8px;
+    padding: 16px;
+    margin-bottom: 20px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.filter-section label {
+    color: #374151;
+    font-weight: 500;
+}
+
+.filter-section select {
+    color: #374151;
+    background-color: white;
+}
+
+/**
+ * Estilos específicos para la página de Precontractual
+ */
+
+/* Mejoras para el timeline */
+.candidate-timeline-item {
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.candidate-timeline-item:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+/* Estilos para barras de progreso */
+.progress-bar {
+    height: 8px;
+    background-color: #e5e7eb;
+    border-radius: 4px;
+    overflow: hidden;
+    margin: 8px 0;
+}
+
+.progress-fill {
+    height: 100%;
+    transition: width 0.3s ease;
+}
+
+.progress-fill.en-proceso {
+    background: linear-gradient(90deg, #fbbf24, #f59e0b);
+}
+
+.progress-fill.finalizado {
+    background: linear-gradient(90deg, #10b981, #059669);
+}
+
+/* Estilos para las métricas */
+.metric-card {
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.metric-card:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.12);
+}
+
+/* Mejoras para las pestañas */
+.tab-button {
+    transition: all 0.2s ease;
+}
+
+.tab-button:not(.active):hover {
+    border-color: #d1d5db !important;
+    color: #374151 !important;
+}
+
+/* Estilos para la Vista de Progreso */
+.progreso-container {
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.candidato-card {
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    margin-bottom: 24px;
+    overflow: hidden;
+    transition: all 0.3s ease;
+}
+
+.candidato-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+}
+
+.candidato-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 24px;
+    border-bottom: 1px solid #f3f4f6;
+    background: linear-gradient(135deg, #f8fafc, #f1f5f9);
+}
+
+.candidato-info {
+    flex: 1;
+}
+
+.candidato-nombre {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-size: 20px;
+    font-weight: 700;
+    color: #1f2937;
+    margin: 0 0 8px 0;
+}
+
+.candidato-nombre .material-icons {
+    font-size: 24px;
+    color: #6b7280;
+}
+
+.candidato-stats {
+    display: flex;
+    gap: 20px;
+    align-items: center;
+}
+
+.total-tiempo,
+.estado-general {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 14px;
+    font-weight: 500;
+}
+
+.total-tiempo {
+    background-color: #e5e7eb;
+    color: #374151;
+}
+
+.estado-general {
+    font-weight: 600;
+}
+
+.estado-general.green {
+    background-color: #d1fae5;
+    color: #065f46;
+}
+
+.estado-general.yellow {
+    background-color: #fef3c7;
+    color: #92400e;
+}
+
+.estado-general.gray {
+    background-color: #f3f4f6;
+    color: #6b7280;
+}
+
+.progreso-general {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+}
+
+.progreso-circular {
+    position: relative;
+    width: 60px;
+    height: 60px;
+}
+
+.progreso-texto {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 14px;
+    font-weight: 700;
+    color: #374151;
+}
+
+.progreso-stats {
+    text-align: center;
+}
+
+.stat-completadas {
+    font-size: 12px;
+    color: #6b7280;
+    font-weight: 500;
+}
+
+.candidato-timeline {
+    padding: 24px;
+}
+
+.etapa-card {
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    margin-bottom: 16px;
+    transition: all 0.3s ease;
+    overflow: hidden;
+}
+
+.etapa-card:last-child {
+    margin-bottom: 0;
+}
+
+.etapa-card.finalizado {
+    border-color: #10b981;
+    background-color: #f0fdf4;
+}
+
+.etapa-card.en-proceso {
+    border-color: #f59e0b;
+    background-color: #fffbeb;
+}
+
+.etapa-card:hover {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.etapa-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px 20px;
+    background-color: #fafafa;
+    border-bottom: 1px solid #e5e7eb;
+    cursor: pointer;
+}
+
+.etapa-card.expanded .etapa-header {
+    background-color: #f3f4f6;
+}
+
+.etapa-info {
+    flex: 1;
+}
+
+.etapa-titulo {
+    font-size: 16px;
+    font-weight: 600;
+    color: #1f2937;
+    margin: 0 0 6px 0;
+}
+
+.etapa-metadata {
+    display: flex;
+    gap: 16px;
+    align-items: center;
+}
+
+.etapa-duracion {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 14px;
+    color: #6b7280;
+}
+
+.etapa-duracion .material-icons {
+    font-size: 16px;
+}
+
+.etapa-estado {
+    padding: 4px 8px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 500;
+}
+
+.etapa-estado.finalizado {
+    background-color: #d1fae5;
+    color: #065f46;
+}
+
+.etapa-estado.en-proceso {
+    background-color: #fef3c7;
+    color: #92400e;
+}
+
+.etapa-toggle {
+    background: none;
+    border: none;
+    color: #6b7280;
+    cursor: pointer;
+    padding: 4px;
+    border-radius: 4px;
+    transition: all 0.2s ease;
+}
+
+.etapa-toggle:hover {
+    background-color: #f3f4f6;
+    color: #374151;
+}
+
+.etapa-card.expanded .etapa-toggle .material-icons {
+    transform: rotate(180deg);
+}
+
+.etapa-progress {
+    padding: 12px 20px;
+    position: relative;
+}
+
+.progress-line {
+    height: 4px;
+    border-radius: 2px;
+    margin-bottom: 8px;
+}
+
+.progress-line.finalizado {
+    background: linear-gradient(90deg, #10b981, #059669);
+}
+
+.progress-line.en-proceso {
+    background: linear-gradient(90deg, #f59e0b, #d97706);
+}
+
+.progress-dates {
+    display: flex;
+    justify-content: space-between;
+    font-size: 12px;
+    color: #6b7280;
+}
+
+.etapa-details {
+    padding: 0 20px 20px 20px;
+    display: none;
+}
+
+.etapa-card.expanded .etapa-details {
+    display: block;
+    animation: slideDown 0.3s ease;
+}
+
+@keyframes slideDown {
+    from {
+        opacity: 0;
+        max-height: 0;
+    }
+    to {
+        opacity: 1;
+        max-height: 500px;
+    }
+}
+
+.fases-section h5 {
+    font-size: 14px;
+    font-weight: 600;
+    color: #374151;
+    margin: 0 0 12px 0;
+}
+
+.fases-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.fase-item {
+    padding: 12px 16px;
+    border: 1px solid #e5e7eb;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    background-color: white;
+}
+
+.fase-item:hover {
+    border-color: #d1d5db;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    transform: translateY(-1px);
+}
+
+.fase-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 4px;
+}
+
+.fase-nombre {
+    font-size: 14px;
+    font-weight: 500;
+    color: #374151;
+}
+
+.fase-estado {
+    padding: 2px 6px;
+    border-radius: 8px;
+    font-size: 11px;
+    font-weight: 500;
+}
+
+.fase-estado.finalizado {
+    background-color: #d1fae5;
+    color: #065f46;
+}
+
+.fase-estado.en-proceso {
+    background-color: #fef3c7;
+    color: #92400e;
+}
+
+.fase-estado.pendiente {
+    background-color: #f3f4f6;
+    color: #6b7280;
+}
+
+.fase-eventos-count {
+    font-size: 12px;
+    color: #6b7280;
+}
+
+.no-fases {
+    text-align: center;
+    color: #6b7280;
+    font-style: italic;
+    padding: 20px;
+}
+
+/* Modal para detalles de fase */
+.fase-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+.fase-modal-content {
+    background: white;
+    border-radius: 12px;
+    max-width: 600px;
+    max-height: 80vh;
+    overflow-y: auto;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    animation: slideInUp 0.3s ease;
+}
+
+@keyframes slideInUp {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.fase-modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px 24px;
+    border-bottom: 1px solid #e5e7eb;
+    background-color: #f9fafb;
+}
+
+.fase-modal-header h3 {
+    margin: 0;
+    font-size: 18px;
+    font-weight: 600;
+    color: #1f2937;
+}
+
+.close-modal {
+    background: none;
+    border: none;
+    color: #6b7280;
+    cursor: pointer;
+    padding: 4px;
+    border-radius: 4px;
+    transition: background-color 0.2s ease;
+}
+
+.close-modal:hover {
+    background-color: #f3f4f6;
+    color: #374151;
+}
+
+.fase-modal-body {
+    padding: 24px;
+}
+
+.candidato-etapa {
+    background-color: #f3f4f6;
+    padding: 12px 16px;
+    border-radius: 6px;
+    margin-bottom: 20px;
+    font-size: 14px;
+    color: #374151;
+}
+
+.eventos-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.evento-detalle {
+    border: 1px solid #e5e7eb;
+    border-radius: 6px;
+    padding: 16px;
+    background-color: #fafafa;
+}
+
+.evento-detalle .evento-fecha {
+    font-weight: 600;
+    color: #374151;
+    margin-bottom: 8px;
+}
+
+.evento-detalle .evento-estado {
+    display: inline-block;
+    padding: 2px 6px;
+    border-radius: 8px;
+    font-size: 11px;
+    font-weight: 500;
+    margin-left: 8px;
+}
+
+.evento-tipo,
+.evento-responsable,
+.evento-observaciones {
+    margin-top: 8px;
+    font-size: 13px;
+    color: #4b5563;
+}
+
+.evento-observaciones {
+    font-style: italic;
+    color: #6b7280;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .candidato-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 16px;
+    }
+    
+    .candidato-stats {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 8px;
+    }
+    
+    .progreso-general {
+        align-self: flex-end;
+    }
+    
+    .etapa-metadata {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 8px;
+    }
+    
+    .fase-modal-content {
+        margin: 20px;
+        max-width: calc(100vw - 40px);
+    }
+}
+
+/* Estilos para los filtros */
+.filter-section select {
+    min-width: 150px;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.filter-section select:focus {
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+/* Mejoras para las listas */
+.analytics-list-item {
+    padding: 12px 0;
+    border-bottom: 1px solid #f3f4f6;
+    transition: background-color 0.2s ease;
+}
+
+.analytics-list-item:hover {
+    background-color: #f9fafb;
+}
+
+.analytics-list-item:last-child {
+    border-bottom: none;
+}
+
+/* Estilos para estados */
+.status-indicator {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    display: inline-block;
+    margin-right: 8px;
+}
+
+.status-indicator.en-proceso {
+    background-color: #f59e0b;
+}
+
+.status-indicator.finalizado {
+    background-color: #10b981;
+}
+
+/* Animaciones de carga */
+.loading-skeleton {
+    background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+    background-size: 200% 100%;
+    animation: loading 1.5s infinite;
+}
+
+@keyframes loading {
+    0% {
+        background-position: 200% 0;
+    }
+    100% {
+        background-position: -200% 0;
+    }
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+    .filter-section .flex {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    
+    .filter-section > div {
+        margin-bottom: 16px;
+    }
+    
+    .gantt-container {
+        overflow-x: auto;
+        padding: 10px;
+    }
+    
+    .metric-card {
+        text-align: center;
+    }
+    
+    .stage-item {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 8px;
+    }
+    
+    .stage-label {
+        min-width: auto;
+        text-align: center;
+    }
+    
+    .stage-duration {
+        text-align: center;
+        min-width: auto;
+    }
+    
+    .candidate-timeline-item .flex {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 12px;
+    }
+    
+    .tab-button {
+        font-size: 14px;
+        padding: 8px 12px;
+    }
+}
+
+/* Tooltips personalizados */
+.tooltip {
+    position: relative;
+}
+
+.tooltip:hover::after {
+    content: attr(data-tooltip);
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    background-color: #374151;
+    color: white;
+    padding: 8px 12px;
+    border-radius: 6px;
+    font-size: 12px;
+    white-space: nowrap;
+    z-index: 1000;
+    margin-bottom: 5px;
+}
+
+.tooltip:hover::before {
+    content: '';
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    border: 5px solid transparent;
+    border-top-color: #374151;
+    z-index: 1000;
+}
+
+/* Mejoras para Chart.js */
+.chart-container {
+    position: relative;
+    height: 300px;
+    margin: 16px 0;
+}
+
+/* Estilos para barras de etapas mejoradas */
+.stage-timeline {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin: 16px 0;
+}
+
+.stage-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 8px;
+    border-radius: 6px;
+    transition: background-color 0.2s ease;
+}
+
+.stage-item:hover {
+    background-color: #f9fafb;
+}
+
+.stage-label {
+    min-width: 120px;
+    font-size: 14px;
+    color: #6b7280;
+}
+
+.stage-bar-container {
+    flex: 1;
+    height: 24px;
+    background-color: #f3f4f6;
+    border-radius: 12px;
+    overflow: hidden;
+    position: relative;
+}
+
+.stage-bar-fill {
+    height: 100%;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    font-weight: 500;
+    color: white;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+    transition: width 0.3s ease;
+}
+
+.stage-duration {
+    min-width: 80px;
+    text-align: right;
+    font-size: 14px;
+    color: #374151;
+    font-weight: 500;
+}
+
+/* Estilos para indicadores de progreso */
+.progress-indicator {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 4px 0;
+}
+
+.progress-dot {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    border: 2px solid;
+    transition: all 0.2s ease;
+}
+
+.progress-dot.completed {
+    background-color: #10b981;
+    border-color: #10b981;
+}
+
+.progress-dot.current {
+    background-color: #f59e0b;
+    border-color: #f59e0b;
+    animation: pulse 2s infinite;
+}
+
+.progress-dot.pending {
+    background-color: transparent;
+    border-color: #d1d5db;
+}
+
+@keyframes pulse {
+    0%, 100% {
+        opacity: 1;
+    }
+    50% {
+        opacity: 0.5;
+    }
+}

@@ -1,0 +1,110 @@
+<!-- Pagos Component -->
+<section id="section-pagos-content" class="form-section mt-4">
+  <div class="form-section-header">
+    <h3><span class="material-icons">payment</span> Gestión de Pagos</h3>
+    <span class="material-icons toggle-icon">expand_more</span>
+  </div>
+  <div class="form-section-content">
+    <form id="formPago" class="space-y-4" novalidate>
+      <div class="field-group field-group-row-3">
+        <div class="field-required">
+          <label class="block text-sm font-medium text-gray-700">Contrato (FK)</label>
+          <div class="input-wrapper">
+            <input name="contrato_id" id="pg_contrato_id" placeholder="Contrato seleccionado" class="mt-1 p-2 border rounded w-full bg-gray-50" required readonly />
+            <input type="hidden" name="pago_id" id="pg_pago_id" />
+          </div>
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700">Persona (FK)</label>
+          <div class="input-wrapper">
+            <input name="persona_id" id="pg_persona_id" placeholder="Persona seleccionada" class="mt-1 p-2 border rounded w-full bg-gray-50" readonly />
+          </div>
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700">Número cobro</label>
+          <div class="input-wrapper">
+            <input name="Numero_cobro" id="pg_Numero_cobro" type="number" placeholder="Auto" class="mt-1 p-2 border rounded w-full" disabled />
+          </div>
+        </div>
+      </div>
+      
+      <div class="field-group field-group-row-3">
+        <div class="field-required">
+          <label class="block text-sm font-medium text-gray-700">Fecha inicio</label>
+          <div class="input-wrapper">
+            <input name="Fecha_inicio" id="pg_Fecha_inicio" type="date" placeholder="AAAA-MM-DD" class="mt-1 p-2 border rounded w-full" required />
+          </div>
+        </div>
+        <div class="field-required">
+          <label class="block text-sm font-medium text-gray-700">Fecha fin</label>
+          <div class="input-wrapper">
+            <input name="Fecha_fin" id="pg_Fecha_fin" type="date" placeholder="AAAA-MM-DD" class="mt-1 p-2 border rounded w-full" required />
+          </div>
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700">Fecha radicación</label>
+          <div class="input-wrapper">
+            <input name="Fecha_radicacion" id="pg_Fecha_radicacion" type="date" placeholder="AAAA-MM-DD" class="mt-1 p-2 border rounded w-full" />
+          </div>
+        </div>
+      </div>
+      
+      <div class="field-group field-group-row-2">
+        <div class="field-required">
+          <label class="block text-sm font-medium text-gray-700">Valor pago</label>
+          <div class="input-wrapper">
+            <input name="Valor_pago" id="pg_Valor_pago" type="number" placeholder="0" class="mt-1 p-2 border rounded w-full" required />
+          </div>
+        </div>
+        <div class="field-required">
+          <label class="block text-sm font-medium text-gray-700">Mes fiscal</label>
+          <div class="input-wrapper">
+            <input name="Mes_fiscal" id="pg_Mes_fiscal" placeholder="YYYY-MM" class="mt-1 p-2 border rounded w-full" required />
+          </div>
+        </div>
+      </div>
+      
+      <div class="field-group field-group-row-3">
+        <div>
+          <label class="block text-sm font-medium text-gray-700">Estado</label>
+          <div class="input-wrapper">
+            <select name="Estado" id="pg_Estado" class="mt-1 p-2 border rounded w-full">
+              <option value="Borrador">Borrador</option>
+              <option value="Radicada">Radicada</option>
+              <option value="En revisión">En revisión</option>
+              <option value="Aprobada">Aprobada</option>
+              <option value="Rechazada">Rechazada</option>
+            </select>
+          </div>
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700">URL PDF</label>
+          <div class="input-wrapper">
+            <input name="URL_PDF" id="pg_URL_PDF" placeholder="URL del documento PDF" class="mt-1 p-2 border rounded w-full" />
+          </div>
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700">URL Soportes</label>
+          <div class="input-wrapper">
+            <input name="URL_Soportes" id="pg_URL_Soportes" placeholder="URL de soportes" class="mt-1 p-2 border rounded w-full" />
+          </div>
+        </div>
+      </div>
+      
+      <div>
+        <label class="block text-sm font-medium text-gray-700">Observaciones</label>
+        <div class="input-wrapper">
+          <textarea name="Observaciones" id="pg_Observaciones" placeholder="Observaciones" rows="2" class="mt-1 p-2 border rounded w-full"></textarea>
+        </div>
+      </div>
+      
+      <div class="flex justify-end gap-2">
+        <button type="submit" class="bg-green-600 text-white px-4 py-2 rounded flex items-center gap-1 hover:bg-green-700">
+          <span class="material-icons text-sm">save</span>
+          <span>Guardar Pago</span>
+        </button>
+      </div>
+      <div id="pagoResult" class="mt-3 text-sm"></div>
+    </form>
+  </div>
+</section>

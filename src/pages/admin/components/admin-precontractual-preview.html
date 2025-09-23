@@ -1,0 +1,63 @@
+<!-- Vista Previa Precontractual Component -->
+<section id="section-precontractual-preview" class="preview-section">
+  <div class="preview-section-header">
+    <h4><span class="material-icons">timeline</span> Progreso Precontractual</h4>
+    <button id="precontractualPreviewRefresh" class="btn-refresh" title="Actualizar vista">
+      <span class="material-icons">refresh</span>
+    </button>
+  </div>
+  
+  <div class="preview-section-content">
+    <!-- Persona info header -->
+    <div id="prePersonaInfo" class="persona-info">
+      <div class="persona-info-placeholder">
+        <span class="material-icons">person_outline</span>
+        <span>Selecciona una persona para ver su progreso</span>
+      </div>
+    </div>
+    
+    <!-- Timeline/Progress visualization -->
+    <div id="preTimelineContainer" class="timeline-container hidden">
+      <div class="timeline-header">
+        <div class="timeline-legend">
+          <div class="legend-item">
+            <div class="legend-color en-proceso"></div>
+            <span>Etapa en proceso</span>
+          </div>
+          <div class="legend-item">
+            <div class="legend-color finalizado"></div>
+            <span>Etapa finalizada</span>
+          </div>
+        </div>
+      </div>
+      
+      <div id="preTimelineChart" class="timeline-chart">
+        <!-- Dynamic timeline bars will be inserted here -->
+      </div>
+  <!-- Phase details (populated when user clicks a phase segment) -->
+  <div id="prePhaseDetails" class="phase-details hidden" aria-live="polite"></div>
+      
+      <!-- Summary stats -->
+      <div id="preTimelineStats" class="timeline-stats">
+        <div class="stat-item">
+          <span class="stat-label">Total días:</span>
+          <span id="statTotalDays" class="stat-value">-</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-label">Etapas activas:</span>
+          <span id="statActiveStages" class="stat-value">-</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-label">Etapas completadas:</span>
+          <span id="statCompletedStages" class="stat-value">-</span>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Empty state -->
+    <div id="preTimelineEmpty" class="timeline-empty">
+      <span class="material-icons">timeline</span>
+      <p>No hay eventos registrados para esta persona</p>
+    </div>
+  </div>
+</section>

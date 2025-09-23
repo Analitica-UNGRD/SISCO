@@ -1,0 +1,64 @@
+/* Local copy of dashboard styles (from backup/dashboard.css) */
+:root{
+	--dash-bg: #0f1720;
+	--dash-card: #1b2430;
+	--dash-accent: #ffd600;
+	--dash-text: #e6eef8;
+}
+/* Sidebar hover fallback: ensure pages that don't load the sidebar JS still expand on hover */
+.sidebar{
+	background-color: #1f2937;
+	position: relative;
+	width: 64px; /* icons-only width */
+	transition: width 220ms cubic-bezier(.2,.9,.2,1), box-shadow 220ms ease;
+	will-change: width;
+	overflow: hidden;
+}
+.sidebar:hover{ width: 16rem; box-shadow: 0 6px 18px rgba(15,23,42,0.12); }
+.sidebar.expanded{ width: 16rem; box-shadow: 0 6px 18px rgba(15,23,42,0.12); }
+html,body{height:100%;margin:0;font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;background:var(--dash-bg);color:var(--dash-text)}
+.dash-header{display:flex;align-items:center;justify-content:space-between;padding:16px 24px;background:linear-gradient(90deg,rgba(255,255,255,0.02),transparent);border-bottom:1px solid rgba(255,255,255,0.03)}
+.dash-brand{font-size:18px;font-weight:700}
+.dash-actions{display:flex;gap:12px;align-items:center}
+.dash-user{opacity:0.85}
+.dash-logout{background:transparent;border:1px solid rgba(255,255,255,0.06);color:var(--dash-text);padding:8px 12px;border-radius:8px;cursor:pointer}
+.dash-logout:hover{background:rgba(255,214,0,0.08)}
+/* Estilos de logout-danger movidos a sidebar.css para consistencia global */
+/* .logout-danger{background:#dc2626;color:#fff;border:none;padding:10px 12px;border-radius:8px;cursor:pointer;display:inline-flex;align-items:center;justify-content:center}
+.logout-danger .material-icons{font-size:18px}
+.logout-danger:hover{background:#b91c1c} */
+
+/* Ajustes para las labels cuando la sidebar está colapsada */
+.sidebar .menu-label{display:inline-block;vertical-align:middle;max-width:220px;overflow:hidden;white-space:nowrap;transition:opacity .18s ease, max-width .18s ease, padding .18s ease, margin .18s ease}
+.sidebar.collapsed .menu-label{opacity:0;max-width:0;padding:0;margin:0;border:0;}
+
+/* Ajustes del área inferior para evitar overflow y controlar padding en colapsado */
+.sidebar .bottom-area{box-sizing:border-box;padding:12px}
+/* Estilos de .logout-danger movidos a sidebar.css para consistencia global */
+/* .sidebar .logout-danger{width:100%;box-sizing:border-box;display:flex;align-items:center;justify-content:flex-start;gap:10px;padding:10px}
+.sidebar.collapsed .logout-danger{justify-content:center;padding-left:0;padding-right:0}
+.sidebar.collapsed .logout-danger .menu-label{display:none !important} */
+
+/* Ensure footer stacks vertically and doesn't overflow the sidebar */
+.sidebar .bottom-area{display:flex;flex-direction:column;gap:8px;align-items:stretch;overflow:hidden}
+.sidebar .bottom-area > div:first-child{display:flex;align-items:center;justify-content:space-between}
+.sidebar .bottom-area > div:last-child{display:block}
+/* Estilo de .logout-danger movido a sidebar.css */
+/* .sidebar .logout-danger{white-space:nowrap;overflow:hidden;text-overflow:ellipsis} */
+
+/* When collapsed, center footer icons and clamp widths to avoid overflow */
+.sidebar.collapsed .bottom-area{justify-content:center;padding-left:6px;padding-right:6px}
+.sidebar.collapsed .bottom-area > div:first-child{justify-content:center}
+.sidebar.collapsed .bottom-area a{justify-content:center;padding-left:0;padding-right:0}
+.sidebar.collapsed .bottom-area .pin-btn{opacity:1;pointer-events:auto;display:inline-flex;margin-left:8px}
+/* Estilos de .logout-danger movidos a sidebar.css para consistencia global */
+/* .sidebar.collapsed .logout-danger{width:44px;padding-left:6px;padding-right:6px;justify-content:center}
+.sidebar.collapsed .logout-danger .menu-label{display:none !important} */
+.dash-main{padding:28px;max-width:1200px;margin:20px auto}
+.dash-intro h1{margin:0 0 6px 0}
+.dash-intro p{margin:0 0 18px 0;color:rgba(230,238,248,0.8)}
+.gallery{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:16px}
+.card{background:var(--dash-card);padding:22px;border-radius:12px;box-shadow:0 6px 18px rgba(0,0,0,0.4);display:flex;align-items:center;justify-content:center;font-weight:600;cursor:pointer;transition:transform .18s ease,box-shadow .18s ease}
+.card:hover{transform:translateY(-6px);box-shadow:0 18px 36px rgba(0,0,0,0.6)}
+.card::after{content:"";display:block;width:36px;height:36px;border-radius:10px;background:linear-gradient(180deg,var(--dash-accent),#ffcf5a);position:absolute;opacity:0.06}
+.placeholder{margin-top:20px;padding:18px;border-radius:10px;background:linear-gradient(180deg,rgba(255,255,255,0.01),rgba(255,255,255,0.0));border:1px solid rgba(255,255,255,0.02);min-height:54px}
