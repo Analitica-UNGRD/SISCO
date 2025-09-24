@@ -10,7 +10,7 @@
     { "src": "src/assets/**/*", "use": "@vercel/static" }
   ],
   "routes": [
-    { "src": "^/$", "dest": "/src/pages/dashboard.html" },
+  { "src": "^/$", "dest": "/src/pages/login.html" },
     { "src": "^/lib/(.*)$", "dest": "/src/lib/$1" },
     { "src": "^/pages-scripts/(.*)$", "dest": "/src/pages-scripts/$1" },
     { "src": "^/styles/(.*)$", "dest": "/src/styles/$1" },
