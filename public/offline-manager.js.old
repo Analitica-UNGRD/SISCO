@@ -1,0 +1,246 @@
+/**
+ * Script para controlar el modo offline de la aplicación
+ * Este archivo agrega un botón para activar/desactivar el modo offline
+ * y proporciona funciones para detectar el estado de la conexión.
+ */
+
+// Esperar a que se cargue el DOM
+document.addEventListener('DOMContentLoaded', function() {
+  // Cargar el CSS de indicador offline
+  loadOfflineStyles();
+  
+  // Inicializar el estado de modo offline
+  initOfflineMode();
+  
+  // Agregar el botón de toggle de modo offline
+  addOfflineModeToggle();
+  
+  // Configurar detección automática de conexión
+  setupConnectionDetection();
+});
+
+// Cargar el CSS para indicadores de modo offline
+function loadOfflineStyles() {
+  const link = document.createElement('link');
+  link.rel = 'stylesheet';
+  link.href = '/public/offline-indicator.css';
+  document.head.appendChild(link);
+}
+
+// Inicializar el modo offline según configuración almacenada
+function initOfflineMode() {
+  try {
+    // Verificar si ya estamos en modo offline
+    const isOffline = 
+      localStorage.getItem('OFFLINE_MODE') === 'true' ||
+      localStorage.getItem('app_offline_mode') === 'true' ||
+      sessionStorage.getItem('FORCE_OFFLINE_MODE') === 'true';
+    
+    if (isOffline) {
+      document.body.classList.add('offline-mode');
+      console.log('Modo offline activado por configuración guardada');
+    }
+    
+    // Verificar parámetros URL
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.has('offline') || urlParams.has('offline_mode')) {
+      enableOfflineMode(true);
+      console.log('Modo offline activado por parámetro URL');
+    }
+  } catch (e) {
+    console.warn('Error al inicializar modo offline:', e);
+  }
+}
+
+// Función para habilitar/deshabilitar el modo offline
+function enableOfflineMode(enable = true) {
+  try {
+    // Actualizar clase en el body
+    if (enable) {
+      document.body.classList.add('offline-mode');
+      document.body.classList.add('mode-change');
+    } else {
+      document.body.classList.remove('offline-mode');
+      document.body.classList.add('mode-change');
+    }
+    
+    setTimeout(() => {
+      document.body.classList.remove('mode-change');
+    }, 500);
+    
+    // Guardar estado en almacenamiento
+    localStorage.setItem('OFFLINE_MODE', enable ? 'true' : 'false');
+    localStorage.setItem('app_offline_mode', enable ? 'true' : 'false');
+    sessionStorage.setItem('FORCE_OFFLINE_MODE', enable ? 'true' : 'false');
+    
+    // Intentar notificar a los módulos de la aplicación
+    notifyOfflineModeChange(enable);
+    
+    // Actualizar estado de botón si existe
+    updateOfflineToggleButton(enable);
+    
+    console.log(`Modo offline ${enable ? 'activado' : 'desactivado'}`);
+    
+    // Mostrar notificación si existe la función
+    if (window.UI && typeof window.UI.showMessage === 'function') {
+      window.UI.showMessage(
+        `Modo offline ${enable ? 'activado' : 'desactivado'}`, 
+        enable ? 'warning' : 'success', 
+        3000
+      );
+    }
+    
+    return true;
+  } catch (e) {
+    console.error('Error al cambiar modo offline:', e);
+    return false;
+  }
+}
+
+// Notificar cambio de modo offline a los módulos
+function notifyOfflineModeChange(isOffline) {
+  try {
+    // Notificar al callback global si existe
+    if (typeof window.onOfflineModeChange === 'function') {
+      window.onOfflineModeChange(isOffline);
+    }
+    
+    // Intentar actualizar el módulo api.mocks.js
+    import('/public/api.mocks.js')
+      .then(module => {
+        if (module && typeof module.enableOfflineMode === 'function') {
+          module.enableOfflineMode(isOffline);
+        }
+      })
+      .catch(e => console.warn('No se pudo importar módulo api.mocks.js:', e));
+      
+    // Intentar actualizar config.js
+    import('/src/lib/config.js')
+      .then(module => {
+        if (module && typeof module.setOfflineMode === 'function') {
+          module.setOfflineMode(isOffline);
+        }
+      })
+      .catch(e => console.warn('No se pudo importar módulo config.js:', e));
+  } catch (e) {
+    console.warn('Error al notificar cambio de modo offline:', e);
+  }
+}
+
+// Agregar botón para alternar modo offline
+function addOfflineModeToggle() {
+  // Crear el botón solo si no existe ya
+  if (!document.getElementById('offlineToggleButton')) {
+    const button = document.createElement('button');
+    button.id = 'offlineToggleButton';
+    button.type = 'button';
+    button.setAttribute('aria-label', 'Alternar modo offline');
+    
+    // Texto inicial basado en el estado actual
+    const isOfflineMode = document.body.classList.contains('offline-mode');
+    button.textContent = isOfflineMode ? 'Desactivar modo offline' : 'Activar modo offline';
+    
+    // Evento de clic
+    button.addEventListener('click', function() {
+      const currentMode = document.body.classList.contains('offline-mode');
+      enableOfflineMode(!currentMode);
+    });
+    
+    // Añadir al body
+    document.body.appendChild(button);
+  }
+}
+
+// Actualizar el texto del botón de toggle
+function updateOfflineToggleButton(isOfflineMode) {
+  const button = document.getElementById('offlineToggleButton');
+  if (button) {
+    button.textContent = isOfflineMode ? 'Desactivar modo offline' : 'Activar modo offline';
+  }
+}
+
+// Configurar detección automática de conexión
+function setupConnectionDetection() {
+  // Verificar conexión inicialmente
+  checkConnection();
+  
+  // Configurar eventos de conexión
+  window.addEventListener('online', handleOnlineEvent);
+  window.addEventListener('offline', handleOfflineEvent);
+  
+  // Verificar periódicamente (cada 30 segundos)
+  setInterval(checkConnection, 30000);
+}
+
+// Verificar estado de conexión
+function checkConnection() {
+  // Verificar si el navegador dice que estamos offline
+  if (!navigator.onLine) {
+    handleOfflineEvent();
+    return;
+  }
+  
+  // Hacer una petición de prueba para verificar conexión real
+  fetch('https://www.google.com/favicon.ico', {
+    method: 'HEAD',
+    mode: 'no-cors',
+    cache: 'no-store',
+    timeout: 2000
+  })
+  .then(() => {
+    // Si ya estábamos en modo offline por falla de conexión, mostrar que se recuperó
+    if (sessionStorage.getItem('CONNECTION_FAILED') === 'true' && 
+        document.body.classList.contains('offline-mode')) {
+      
+      // Notificar recuperación de conexión
+      if (window.UI && typeof window.UI.showMessage === 'function') {
+        window.UI.showMessage('Conexión a internet recuperada', 'success', 3000);
+      }
+      
+      sessionStorage.removeItem('CONNECTION_FAILED');
+      
+      // No desactivamos el modo offline automáticamente, dejamos que el usuario decida
+    }
+  })
+  .catch(e => {
+    console.warn('Verificación de conexión fallida:', e);
+    sessionStorage.setItem('CONNECTION_FAILED', 'true');
+    
+    // Si no estamos ya en modo offline, activarlo y notificar
+    if (!document.body.classList.contains('offline-mode')) {
+      enableOfflineMode(true);
+      
+      if (window.UI && typeof window.UI.showMessage === 'function') {
+        window.UI.showMessage(
+          'Se activó el modo offline debido a problemas de conexión', 
+          'warning', 
+          5000
+        );
+      }
+    }
+  });
+}
+
+// Manejar evento de navegador online
+function handleOnlineEvent() {
+  console.log('Evento del navegador: online');
+  // No desactivamos el modo offline automáticamente, solo verificamos la conexión
+  checkConnection();
+}
+
+// Manejar evento de navegador offline
+function handleOfflineEvent() {
+  console.log('Evento del navegador: offline');
+  // Activar modo offline automáticamente
+  if (!document.body.classList.contains('offline-mode')) {
+    enableOfflineMode(true);
+    
+    if (window.UI && typeof window.UI.showMessage === 'function') {
+      window.UI.showMessage(
+        'Modo offline activado automáticamente (sin conexión)', 
+        'warning', 
+        5000
+      );
+    }
+  }
+}

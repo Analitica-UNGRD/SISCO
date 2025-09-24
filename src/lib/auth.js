@@ -38,8 +38,18 @@ const Auth = {
 					body: JSON.stringify({ path: 'login', payload: { email, password } })
 				});
 				
-				// Procesa la respuesta
-				const data = await resp.json();
+				// Procesa la respuesta - tolera respuestas no-JSON (HTML/text) para dar
+				// un mensaje de error legible en vez de lanzar un SyntaxError.
+				const raw = await resp.text();
+				let data;
+				try {
+					data = raw && raw.length ? JSON.parse(raw) : null;
+				} catch (parseErr) {
+					// Backend returned non-JSON (probably HTML error page). Surface a
+					// concise message that includes a snippet to help debugging.
+					const snippet = raw ? raw.substr(0, 200) : '';
+					return { success: false, message: 'Error de conexión: respuesta no JSON - ' + snippet };
+				}
 				if (!data || !data.ok) {
 					return { success: false, message: (data && data.error) || 'Error de autenticación' };
 				}

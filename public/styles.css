@@ -1,0 +1,7 @@
+/* styles.css - utilidades extra */
+.loader{border-width:3px}
+.animate-spin{animation:spin 1s linear infinite}
+@keyframes spin{from{transform:rotate(0)}to{transform:rotate(360deg)}}
+
+/* small responsive adjustments */
+.sidebar{background-color:#1f2937}
