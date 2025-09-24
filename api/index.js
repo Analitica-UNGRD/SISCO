@@ -51,7 +51,10 @@ function setCorsHeaders(req, res) {
 
 module.exports = async (req, res) => {
   // Quick health check
-  if (req.method === 'GET' && req.url === '/api/health' || (req.method === 'GET' && req.url === '/api/health/')) {
+  // Note: when deployed as a Vercel Serverless Function mounted at /api,
+  // the incoming req.url may be '/health' (path within the function). Accept
+  // '/health' and '/api/health' with or without trailing slash.
+  if (req.method === 'GET' && (/\/?(api\/)?health\/?$/.test(req.url))) {
     setCorsHeaders(req, res);
     res.setHeader('Content-Type', 'application/json');
     return res.end(JSON.stringify({ ok: true, ts: new Date().toISOString(), target: TARGET_URL }));
