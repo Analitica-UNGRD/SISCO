@@ -1,0 +1,114 @@
+seguimiento_contratistas/
+├── apps_script/
+│   └── code.gs                          # Código de Google Apps Script
+│
+├── archive/                             # Archivos históricos y de referencia
+│   ├── admin-original-FULL.css
+│   ├── admin-original-FULL.html
+│   ├── admin-original-FULL.js
+│   ├── admin-sectional-original.css
+│   ├── admin-sectional-original.html
+│   ├── admin-sectional-original.js
+│   ├── duplicates/                      # Copias de seguridad de archivos duplicados
+│   │   ├── auth-system.js
+│   │   ├── backup-auth-system.js
+│   │   └── ... (varios archivos de respaldo)
+│   └── legacy-files/                    # Archivos de versiones anteriores
+│       ├── admin-sectional.css
+│       ├── admin-sectional.js
+│       ├── admin.css
+│       └── admin.js
+│
+├── backup/                              # Respaldos generales
+│   ├── code.gs
+│   ├── dashboard.css
+│   ├── dashboard.html
+│   └── login-page.js
+│
+├── backups/                             # Respaldos organizados por fecha
+│   └── checkpoint-2025-09-02_0001/
+│       └── src/
+│           └── pages/
+│               └── admin/
+│
+├── public/                              # Archivos públicos y de cliente
+│   ├── api.mocks.js                     # Simulaciones de API
+│   ├── index.html                       # Página pública de entrada
+│   ├── session.js                       # Manejo de sesiones
+│   ├── styles.css                       # Estilos globales públicos
+│   └── templates.js                     # Plantillas HTML
+│
+├── src/                                 # Código fuente principal
+│   ├── assets/                          # Recursos gráficos
+│   │   ├── Login_UNGRD.png
+│   │   └── Logo_gris.png
+│   │
+│   ├── lib/                             # Bibliotecas compartidas
+│   │   ├── auth-system.js               # Sistema de autenticación
+│   │   ├── auth.js                      # Funciones de autenticación
+│   │   ├── config.js                    # Configuraciones del proyecto
+│   │   ├── loader.js                    # Utilidad de carga
+│   │   └── ui.js                        # Utilidades de interfaz de usuario
+│   │
+│   ├── pages/                           # Páginas de la aplicación
+│   │   ├── admin/                       # Módulo de administración
+│   │   │   ├── components/              # Componentes HTML para el admin
+│   │   │   │   ├── admin-contratos.html
+│   │   │   │   ├── admin-datos-basicos.html
+│   │   │   │   ├── admin-obligaciones.html
+│   │   │   │   ├── admin-pagos.html
+│   │   │   │   ├── admin-precontractual.html
+│   │   │   │   ├── admin-preview.html
+│   │   │   │   └── admin-roles.html
+│   │   │   │
+│   │   │   ├── scripts/                 # Scripts JavaScript del admin
+│   │   │   │   ├── admin-contratos.js
+│   │   │   │   ├── admin-datos-basicos.js
+│   │   │   │   ├── admin-main.js
+│   │   │   │   ├── admin-obligaciones.js
+│   │   │   │   ├── admin-pagos.js
+│   │   │   │   ├── admin-precontractual.js
+│   │   │   │   └── admin-roles.js
+│   │   │   │
+│   │   │   ├── styles/                  # Estilos CSS del admin
+│   │   │   │   ├── admin-base.css
+│   │   │   │   ├── admin-components.css
+│   │   │   │   └── admin-responsive.css
+│   │   │   │
+│   │   │   ├── admin-debug-panel.js     # Panel de depuración
+│   │   │   ├── admin-performance.js     # Herramientas de rendimiento
+│   │   │   ├── admin-test-suite.js      # Suite de pruebas
+│   │   │   ├── admin.html               # Página principal del admin
+│   │   │   ├── README.md                # Documentación del módulo admin
+│   │   │   └── REFACTORING-FINAL-REPORT.md # Informe de refactorización
+│   │   │
+│   │   ├── admin-original-backup.html   # Copia de seguridad de admin original
+│   │   ├── contratistas.html            # Página de gestión de contratistas
+│   │   ├── dashboard.html               # Panel principal
+│   │   ├── login.html                   # Página de inicio de sesión
+│   │   └── personas.html                # Página de gestión de personas
+│   │
+│   ├── pages-scripts/                   # Scripts para páginas principales
+│   │   ├── admin-original-backup.js     # Respaldo del script admin
+│   │   ├── contratistas.js              # Lógica para contratistas
+│   │   ├── dashboard.js                 # Lógica para dashboard
+│   │   ├── login-page.js                # Lógica para login
+│   │   ├── personas.js                  # Lógica para personas
+│   │   └── sidebar.js                   # Lógica para barra lateral
+│   │
+│   └── styles/                          # Estilos globales
+│       ├── acordeon-fix.css             # Corrección para componentes acordeón
+│       ├── dashboard.css                # Estilos para dashboard
+│       ├── login.css                    # Estilos para login
+│       └── personas.css                 # Estilos para página de personas
+│
+├── index.html                           # Página principal (redirige a login)
+├── package.json                         # Configuración de dependencias npm
+├── Picture1.png                         # Imagen de recurso
+├── README.md                            # Documentación principal
+├── README_Login.md                      # Documentación del sistema de login
+├── README_PROXY.md                      # Documentación del proxy API
+├── server.js                            # Servidor de desarrollo con proxy API
+├── CLEANUP-FINAL-REPORT.md              # Informe final de limpieza de código
+├── MIGRATION-STATUS.md                  # Estado de la migración del sistema
+└── temp_preview_content.html            # Vista previa de contenido temporal
