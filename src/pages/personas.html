@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Personas - Seguimiento</title>
+    <link rel="stylesheet" href="./personas.css">
+  </head>
+  <body>
+    <header class="dash-header">
+      <div class="dash-brand">Seguimiento Contratistas</div>
+      <div class="dash-actions">
+        <button id="backBtn" class="dash-logout">Volver</button>
+      </div>
+    </header>
+
+    <main class="dash-main">
+      <section class="dash-intro">
+        <h1>Personas</h1>
+        <p>Listado de personas registradas en la hoja de cálculo.</p>
+      </section>
+
+      <section class="personas-list" id="personasList">
+        <div class="loading">Cargando...</div>
+      </section>
+    </main>
+
+    <!-- Protección de sesión -->
+    <script type="module" src="../lib/ui.js"></script>
+    <script type="module" src="../lib/session-guard.js"></script>
+    <script type="module" src="../lib/session-indicator.js"></script>
+    <script type="module" src="./config.js"></script>
+    <script type="module" src="./ui.js"></script>
+    <script type="module" src="./auth.js"></script>
+    <script type="module" src="./personas.js"></script>
+  </body>
+</html>

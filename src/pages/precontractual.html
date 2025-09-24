@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Seguimiento Precontractual - UNGRD</title>
+    
+    <!-- Material Icons -->
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Chart.js para gráficos -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <!-- Librería alternativa más simple para timeline -->
+    <script src="https://cdn.jsdelivr.net/npm/vis-timeline@7.5.1/standalone/umd/vis-timeline-graph2d.min.js"></script>
+    <link href="https://cdn.jsdelivr.net/npm/vis-timeline@7.5.1/styles/vis-timeline-graph2d.min.css" rel="stylesheet" type="text/css" />
+    
+    <!-- Estilos comunes -->
+    <link rel="stylesheet" href="../styles/sidebar.css">
+    <link rel="stylesheet" href="../styles/precontractual.css">
+    
+    <style>
+        .gantt-container {
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        
+        .status-badge {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+        
+        .status-en-proceso {
+            background-color: #fef3c7;
+            color: #92400e;
+        }
+        
+        .status-finalizado {
+            background-color: #d1fae5;
+            color: #065f46;
+        }
+        
+        .metric-card {
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .candidate-row {
+            border-bottom: 1px solid #e5e7eb;
+            padding: 16px 0;
+        }
+        
+        .candidate-row:last-child {
+            border-bottom: none;
+        }
+        
+        .stage-bar {
+            height: 24px;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            font-weight: 500;
+            margin: 4px 0;
+            position: relative;
+        }
+        
+        .stage-en-proceso {
+            background-color: #fbbf24;
+            color: #92400e;
+        }
+        
+        .stage-finalizado {
+            background-color: #10b981;
+            color: white;
+        }
+        
+        .filter-section {
+            background: white;
+            border-radius: 8px;
+            padding: 16px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+    </style>
+</head>
+<body class="bg-gray-100">
+    <div class="flex min-h-screen">
+        <!-- Sidebar -->
+        <div id="shared-sidebar"></div>
+        
+        <!-- Main content -->
+        <main class="flex-1 precontractual-content">
+            <div class="p-6">
+                <div class="max-w-7xl mx-auto">
+                <!-- Header -->
+                <div class="mb-6">
+                    <h1 class="text-3xl font-bold text-gray-900 mb-2">Seguimiento Precontractual</h1>
+                    <p class="text-gray-600">Visualización del progreso de los procesos precontractuales por candidato</p>
+                </div>
+                
+                <!-- Filtros -->
+                <div class="filter-section">
+                    <div class="flex flex-wrap gap-4 items-center">
+                        <div>
+                            <label for="candidateFilter" class="block text-sm font-medium text-gray-700 mb-1">Candidato</label>
+                            <select id="candidateFilter" class="border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                <option value="">Todos los candidatos</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label for="stageFilter" class="block text-sm font-medium text-gray-700 mb-1">Etapa</label>
+                            <select id="stageFilter" class="border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                <option value="">Todas las etapas</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label for="statusFilter" class="block text-sm font-medium text-gray-700 mb-1">Estado</label>
+                            <select id="statusFilter" class="border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                <option value="">Todos los estados</option>
+                                <option value="En proceso">En proceso</option>
+                                <option value="Finalizado">Finalizado</option>
+                            </select>
+                        </div>
+                        <div class="flex items-end">
+                            <button id="refreshData" class="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 mr-2">
+                                <span class="material-icons text-sm mr-1">refresh</span>
+                                Actualizar
+                            </button>
+                            <button id="loadSampleData" class="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500">
+                                <span class="material-icons text-sm mr-1">science</span>
+                                Datos de prueba
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Métricas principales -->
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
+                    <div class="metric-card">
+                        <div class="flex items-center">
+                            <span class="material-icons text-blue-500 mr-3">people</span>
+                            <div>
+                                <p class="text-sm text-gray-600">Total Candidatos</p>
+                                <p id="totalCandidates" class="text-2xl font-bold text-gray-900">-</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="metric-card">
+                        <div class="flex items-center">
+                            <span class="material-icons text-yellow-500 mr-3">schedule</span>
+                            <div>
+                                <p class="text-sm text-gray-600">En Proceso</p>
+                                <p id="inProgressCount" class="text-2xl font-bold text-gray-900">-</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="metric-card">
+                        <div class="flex items-center">
+                            <span class="material-icons text-green-500 mr-3">check_circle</span>
+                            <div>
+                                <p class="text-sm text-gray-600">Finalizados</p>
+                                <p id="completedCount" class="text-2xl font-bold text-gray-900">-</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="metric-card">
+                        <div class="flex items-center">
+                            <span class="material-icons text-red-500 mr-3">timer</span>
+                            <div>
+                                <p class="text-sm text-gray-600">Tiempo Promedio (días)</p>
+                                <p id="averageTime" class="text-2xl font-bold text-gray-900">-</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Pestañas de visualización -->
+                <div class="mb-6">
+                    <div class="border-b border-gray-200">
+                        <nav class="-mb-px flex space-x-8">
+                            <button id="tab-timeline" class="tab-button active border-b-2 border-blue-500 py-2 px-1 text-sm font-medium text-blue-600">
+                                <span class="material-icons text-sm mr-1">timeline</span>
+                                Vista Timeline
+                            </button>
+                            <button id="tab-progreso" class="tab-button border-b-2 border-transparent py-2 px-1 text-sm font-medium text-gray-500 hover:text-gray-700 hover:border-gray-300">
+                                <span class="material-icons text-sm mr-1">trending_up</span>
+                                Vista Progreso
+                            </button>
+                            <button id="tab-analytics" class="tab-button border-b-2 border-transparent py-2 px-1 text-sm font-medium text-gray-500 hover:text-gray-700 hover:border-gray-300">
+                                <span class="material-icons text-sm mr-1">analytics</span>
+                                Analíticas
+                            </button>
+                        </nav>
+                    </div>
+                </div>
+                
+                <!-- Contenido de las pestañas -->
+                <div id="content-timeline" class="tab-content">
+                    <div class="bg-white rounded-lg shadow p-6">
+                        <h2 class="text-xl font-semibold mb-4">Timeline por Candidato</h2>
+                        <div id="candidateTimeline">
+                            <!-- El contenido se cargará dinámicamente -->
+                        </div>
+                    </div>
+                </div>
+                
+                <div id="content-progreso" class="tab-content hidden">
+                    <div class="progreso-container">
+                        <div class="flex justify-between items-center mb-6">
+                            <h2 class="text-xl font-semibold">Progreso por Candidato</h2>
+                            <div class="flex items-center space-x-4">
+                                <div class="flex items-center space-x-2">
+                                    <div class="w-3 h-3 bg-green-500 rounded-full"></div>
+                                    <span class="text-sm text-gray-600">Finalizado</span>
+                                </div>
+                                <div class="flex items-center space-x-2">
+                                    <div class="w-3 h-3 bg-yellow-500 rounded-full"></div>
+                                    <span class="text-sm text-gray-600">En Proceso</span>
+                                </div>
+                                <div class="flex items-center space-x-2">
+                                    <div class="w-3 h-3 bg-gray-300 rounded-full"></div>
+                                    <span class="text-sm text-gray-600">Pendiente</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div id="progreso-content" class="space-y-6">
+                            <!-- Contenido dinámico de progreso -->
+                        </div>
+                    </div>
+                </div>
+                
+                <div id="content-analytics" class="tab-content hidden">
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                        <div class="bg-white rounded-lg shadow p-6">
+                            <h3 class="text-lg font-semibold mb-4">Duración por Etapa</h3>
+                            <canvas id="stageChart"></canvas>
+                        </div>
+                        
+                        <div class="bg-white rounded-lg shadow p-6">
+                            <h3 class="text-lg font-semibold mb-4">Distribución de Estados</h3>
+                            <canvas id="statusChart"></canvas>
+                        </div>
+                        
+                        <div class="bg-white rounded-lg shadow p-6">
+                            <h3 class="text-lg font-semibold mb-4">Cuellos de Botella</h3>
+                            <div id="bottlenecksList">
+                                <!-- Lista de cuellos de botella -->
+                            </div>
+                        </div>
+                        
+                        <div class="bg-white rounded-lg shadow p-6">
+                            <h3 class="text-lg font-semibold mb-4">Ranking de Tiempo Total</h3>
+                            <div id="timeRankingList">
+                                <!-- Ranking de candidatos por tiempo -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Loading indicator -->
+                <div id="loading" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+                    <div class="bg-white rounded-lg p-6 flex items-center">
+                        <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mr-3"></div>
+                        <span>Cargando datos...</span>
+                    </div>
+                </div>
+                </div>
+            </div>
+        </main>
+    </div>
+    
+    <!-- Scripts -->
+    <script type="module">
+        import { initSidebar } from '../pages-scripts/sidebar.js';
+        try{ const el = document.querySelector('aside.sidebar'); if(el) initSidebar(el); }catch(e){}
+    </script>
+    <!-- Protección de sesión -->
+    <script type="module" src="../lib/ui.js"></script>
+    <script type="module" src="../lib/session-guard.js"></script>
+    <script type="module" src="../lib/session-indicator.js"></script>
+    <script type="module" src="../pages-scripts/precontractual.js"></script>
+    <script type="module">
+        import { renderSidebar } from '../pages-scripts/sidebar-component.js';
+        try{ renderSidebar('#shared-sidebar'); }catch(e){}
+    </script>
+</body>
+</html>

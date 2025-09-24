@@ -1,0 +1,237 @@
+/* Admin Responsive Styles */
+
+/* Mobile First Responsive Design */
+@media (max-width: 640px) {
+  /* Sidebar behavior for mobile is handled by the shared sidebar styles. */
+  
+  /* Main content adjustments */
+  main {
+    margin-left: 0;
+    padding: 1rem;
+  }
+  
+  /* Context bar mobile */
+  #contextBar {
+    flex-direction: column;
+    gap: 1rem;
+    position: relative;
+    top: 0;
+  }
+  
+  #contextBar .flex {
+    flex-direction: column;
+    width: 100%;
+    gap: 0.5rem;
+  }
+  
+  /* Section navigation mobile */
+  .section-nav {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+  
+  .section-nav-item {
+    justify-content: center;
+    padding: 1rem;
+  }
+  
+  /* Form sections mobile */
+  .form-section-content {
+    padding: 1rem;
+  }
+  
+  /* Preview panel mobile */
+  .preview-panel {
+    position: relative !important;
+    right: auto !important;
+    top: auto !important;
+    transform: none !important;
+    width: 100% !important;
+    max-height: none !important;
+    margin-top: 2rem;
+  }
+  
+  .api-logs-panel {
+    position: relative !important;
+    bottom: auto !important;
+    right: auto !important;
+    width: 100% !important;
+    margin-top: 1rem;
+  }
+}
+
+/* Tablet Styles */
+@media (min-width: 641px) and (max-width: 1024px) {
+  .dual-panel {
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+  }
+  
+  .preview-panel {
+    position: relative !important;
+    right: auto !important;
+    top: auto !important;
+    transform: none !important;
+    width: 100% !important;
+    max-height: 400px !important;
+    margin-top: 2rem;
+  }
+  
+  .section-nav {
+    flex-wrap: wrap;
+  }
+  
+  .field-group-row-3 {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+/* Desktop adjustments */
+@media (min-width: 1025px) {
+  /* Desktop layout adjustments; sidebar hover is handled by shared styles */
+  
+  /* Preview panel positioning */
+  .preview-panel {
+    width: 100%;
+    max-height: calc(100vh - 4rem);
+  }
+  
+  .api-logs-panel {
+    position: fixed;
+    bottom: 2rem;
+    right: 2rem;
+    width: 400px;
+    max-height: 300px;
+  }
+}
+
+/* Hide the API logs floating panel when it has no content to avoid a thin line showing */
+.api-logs-panel:empty {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
+  padding: 0 !important;
+  border: none !important;
+}
+
+/* Large desktop */
+@media (min-width: 1440px) {
+  .dual-panel {
+    grid-template-columns: 1fr minmax(300px, 520px);
+    gap: 3rem;
+  }
+  
+  .preview-panel {
+    width: 100%;
+  }
+  
+  .form-section-content {
+    padding: 2rem;
+  }
+}
+
+/* Print styles */
+@media print {
+  .sidebar,
+  .section-nav,
+  .preview-panel,
+  .api-logs-panel,
+  #contextBar {
+    display: none !important;
+  }
+  
+  main {
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+  
+  .form-section {
+    page-break-inside: avoid;
+    box-shadow: none;
+    border: 1px solid #ccc;
+  }
+  
+  .btn {
+    display: none;
+  }
+}
+
+/* High contrast mode */
+@media (prefers-contrast: high) {
+  .form-section {
+    border: 2px solid var(--neutral-800);
+  }
+  
+  .input-wrapper input,
+  .input-wrapper select,
+  .input-wrapper textarea {
+    border: 2px solid var(--neutral-600);
+  }
+  
+  .preview-container {
+    background: var(--neutral-100);
+    border: 2px solid var(--neutral-800);
+  }
+}
+
+/* Reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+  
+  .fade-in {
+    animation: none;
+  }
+}
+
+/* Focus management for accessibility */
+@media (prefers-reduced-motion: no-preference) {
+  .form-section-header:focus {
+    outline: 2px solid var(--primary-color);
+    outline-offset: 2px;
+  }
+  
+  .section-nav-item:focus {
+    outline: 2px solid var(--primary-color);
+    outline-offset: 2px;
+  }
+}
+
+/* Container queries for advanced responsive design */
+@container (max-width: 600px) {
+  .field-group-row-2,
+  .field-group-row-3 {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Dark mode support disabled - Force light mode */
+/* @media (prefers-color-scheme: dark) {
+  :root {
+    --neutral-50: #1f2937;
+    --neutral-100: #374151;
+    --neutral-200: #4b5563;
+    --neutral-300: #6b7280;
+    --neutral-700: #e5e7eb;
+    --neutral-800: #f3f4f6;
+    --neutral-900: #f9fafb;
+  }
+  
+  body {
+    background: linear-gradient(to bottom right, var(--neutral-50), var(--neutral-100));
+    color: var(--neutral-700);
+  }
+  
+  .form-section {
+    background: var(--neutral-100);
+    border-color: var(--neutral-200);
+  }
+  
+  .form-section-header {
+    background: var(--neutral-200);
+    border-color: var(--neutral-300);
+  }
+} */

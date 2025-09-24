@@ -1,0 +1,539 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Contratistas - Seguimiento</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet"/>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="../../public/api-proxy.js"></script>
+  <link href="../styles/sidebar.css" rel="stylesheet"/>
+  <style>
+    body { font-family: 'Inter', sans-serif; background-color:#f0f2f5 }
+    .semaforo { display:flex; gap:12px; align-items:center }
+    .badge { width:14px; height:14px; border-radius:50% }
+    
+    /* Nueva estructura compacta */
+    .material-icons { font-size: 16px; }
+    
+    /* semaforo card styles - diseño moderno según imagen de referencia */
+    .semaforo-card{ 
+      opacity: 0; 
+      transform: translateY(4px); 
+      transition: all .3s cubic-bezier(.2,.9,.2,1);
+      cursor: pointer;
+      position: relative;
+      overflow: hidden;
+      border-radius: 12px;
+      border: none;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+      margin-bottom: 8px;
+    }
+    .semaforo-card.enter{ opacity:1; transform: translateY(0); }
+    .semaforo-card:hover{ 
+      box-shadow: 0 4px 12px rgba(0,0,0,0.12);
+      transform: translateY(-2px);
+    }
+    
+    /* Estilos para cada tipo de estado */
+    .semaforo-card.red-status {
+      background-color: #fcf1f1; /* Fondo rojo muy claro */
+    }
+    .semaforo-card.amber-status {
+      background-color: #fcf8f1; /* Fondo ámbar muy claro */
+    }
+    .semaforo-card.green-status {
+      background-color: #f1fcf4; /* Fondo verde muy claro */
+    }
+    .semaforo-card.gray-status {
+      background-color: #f5f5f5; /* Fondo gris claro para vencidos */
+    }
+    
+    /* Estilos para los badges de estado */
+    .status-badge {
+      font-size: 0.75rem;
+      font-weight: 600;
+      padding: 2px 8px;
+      border-radius: 4px;
+      align-self: flex-start;
+    }
+    .status-badge.red-status {
+      background-color: #fbe9e9;
+      color: #b42424;
+    }
+    .status-badge.amber-status {
+      background-color: #fdf3e4;
+      color: #b46d24;
+    }
+    .status-badge.green-status {
+      background-color: #e9f7ed;
+      color: #247c3f;
+    }
+    .status-badge.gray-status {
+      background-color: #efefef;
+      color: #555555;
+    }
+    
+    /* Estilo especial para días vencidos */
+    .semaforo-card.gray-status .text-red-900 {
+      position: relative;
+      display: inline-block;
+    }
+    
+    /* Estilos para los indicadores de estado */
+    .contratos-header {
+      background-color: white;
+      border-radius: 12px;
+      padding: 12px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+      margin-bottom: 12px;
+    }
+    
+    /* Indicadores de estado */
+    .status-indicators {
+      background-color: #f9fafb;
+      border-radius: 6px;
+      padding: 4px;
+    }
+    
+    .status-indicator {
+      font-size: 0.65rem;
+    }
+    
+    /* Estilos para el scroll */
+    .contratos-cards {
+      padding-right: 8px;
+    }
+    
+    .custom-scrollbar::-webkit-scrollbar {
+      width: 6px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-track {
+      background: #f5f5f5;
+      border-radius: 10px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-thumb {
+      background: #d1d5db;
+      border-radius: 10px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+      background: #9ca3af;
+    }
+    .semaforo-card .contract-value::before {
+      content: "";
+      display: inline-block;
+      width: 4px;
+      height: 4px;
+      border-radius: 50%;
+      background-color: rgba(0, 0, 0, 0.3);
+    }
+    
+    /* Estilos específicos para cada tipo de tarjeta con fondo coloreado */
+    .semaforo-card.red-status .days-indicator {
+      background-color: rgba(239, 68, 68, 0.2);
+      color: rgb(153, 27, 27);
+    }
+    .semaforo-card.amber-status .days-indicator {
+      background-color: rgba(245, 158, 11, 0.2);
+      color: rgb(146, 64, 14);
+    }
+    .semaforo-card.green-status .days-indicator {
+      background-color: rgba(16, 185, 129, 0.2);
+      color: rgb(6, 95, 70);
+      background-color: #9ca3af;
+    }
+    .selected-semaforo {
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1) !important;
+      transform: translateY(-2px);
+      border: 2px solid rgba(59, 130, 246, 0.5) !important;
+      /* No cambiamos el color de fondo para mantener el color del semáforo */
+    }
+    .custom-scrollbar {
+      scrollbar-width: thin;
+      scrollbar-color: #cbd5e1 transparent;
+    }
+    .custom-scrollbar::-webkit-scrollbar {
+      width: 5px;
+      height: 5px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-track {
+      background: rgba(241, 241, 241, 0.3);
+      border-radius: 10px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-thumb {
+      background: rgba(148, 163, 184, 0.5);
+      border-radius: 10px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+      background: rgba(100, 116, 139, 0.6);
+    }
+    
+    /* Animation for empty state */
+    @keyframes pulse {
+      0% { opacity: 0.6; }
+      50% { opacity: 1; }
+      100% { opacity: 0.6; }
+    }
+    .pulse-animation {
+      animation: pulse 2s infinite ease-in-out;
+    }
+    .semaforo-card .contract-id{ font-weight:600; font-size:0.9rem; }
+    .selected-semaforo{ 
+      background-color: rgba(59, 130, 246, 0.05) !important;
+      border-color: rgba(59, 130, 246, 0.3) !important;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    }
+    
+    /* subtítulos y secciones */
+    .section-card-group { 
+      position: relative;
+      padding-left: 12px;
+    }
+    .section-card-group::after {
+      content: "";
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 3px;
+      height: 100%;
+      border-radius: 4px;
+      background: var(--section-color, #6b7280);
+      opacity: 0.5;
+    }
+    
+    /* detail card styles */
+    .detail-card{ 
+      transition: all 0.15s ease;
+      cursor: pointer;
+      border-radius: 8px;
+      overflow: hidden;
+    }
+    .detail-card:hover{ 
+      transform: translateY(-1px); 
+      box-shadow: 0 2px 8px rgba(2,6,23,0.05);
+    }
+    
+    /* table semaforo indicator */
+    .table-pill{ 
+      display:inline-block; 
+      padding:4px 8px; 
+      border-radius:999px; 
+      color:#fff; 
+      font-weight:600; 
+      font-size:0.75rem; 
+      min-width:100px; 
+      text-align:center; 
+      white-space: nowrap;
+    }
+    .table-pill.expired{ background:#9ca3af; } /* Gris para contratos ya vencidos */
+    .table-pill.overdue{ background:#ef4444; } /* Rojo para contratos críticos (<=30 días) */
+    .table-pill.soon{ background:#f59e0b; } /* Ámbar para alertas (31-90 días) */
+    .table-pill.ok{ background:#10b981; } /* Verde para contratos OK (>90 días) */
+    .table-accent{ 
+      width:4px; 
+      height:20px; 
+      display:inline-block; 
+      border-radius:4px; 
+      margin-right:6px; 
+      vertical-align:middle; 
+    }
+    
+    /* Estilos para filas según estado */
+    .contract-row.expired-row { background-color: rgba(243, 244, 246, 0.4); }
+    .contract-row.overdue-row { background-color: rgba(254, 226, 226, 0.2); }
+    .contract-row.soon-row { background-color: rgba(254, 243, 199, 0.2); }
+    .contract-row.ok-row { background-color: rgba(209, 250, 229, 0.2); }
+    
+    .contract-row.expired-row:hover { background-color: rgba(243, 244, 246, 0.6); }
+    .contract-row.overdue-row:hover { background-color: rgba(254, 226, 226, 0.4); }
+    .contract-row.soon-row:hover { background-color: rgba(254, 243, 199, 0.4); }
+    .contract-row.ok-row:hover { background-color: rgba(209, 250, 229, 0.4); }
+    
+    /* table row selection */
+    tr.contract-row.selected-row{ background: rgba(96,165,250,0.08); }
+    tr.contract-row.selected-row td{ font-weight:600; }
+    
+    /* scroll personalizado */
+    .custom-scrollbar::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-thumb {
+      background-color: rgba(156, 163, 175, 0.5);
+      border-radius: 3px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-track {
+      background: rgba(243, 244, 246, 0.5);
+      border-radius: 3px;
+    }
+    
+    /* Responsive improvements */
+    @media (max-width: 1024px) {
+      .section-card-group::after {
+        display: none;
+      }
+    }
+  </style>
+</head>
+<body class="bg-gray-100">
+  <div class="flex h-screen">
+    <div id="shared-sidebar"></div>
+    <main class="flex-1 p-8 overflow-y-auto">
+      <header class="flex justify-between items-center mb-6">
+        <div>
+          <h2 class="text-2xl font-bold text-gray-800">Contratistas</h2>
+          <p class="text-gray-500">Monitoreo y filtros de contratos</p>
+        </div>
+        <div class="flex items-center space-x-4">
+          <input id="globalSearch" class="bg-white rounded-full py-2 px-4 pl-10 focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Buscar contratista..." type="text"/>
+        </div>
+      </header>
+
+  <!-- (contractDetail moved to the right column next to 'Contratos próximos a vencer') -->
+
+      <!-- Nuevo diseño compacto con dos columnas -->
+      <section class="mb-6">
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+          <!-- Columna izquierda: Contratos próximos a vencer - Diseño moderno -->
+          <div class="lg:col-span-1">
+            <div class="bg-white p-5 rounded-xl shadow-sm h-full border border-gray-100">
+              <!-- Encabezado con diseño más elegante -->
+              <div class="flex items-center justify-between mb-5">
+                <div class="flex items-center">
+                  <div class="flex items-center justify-center w-10 h-10 rounded-lg bg-gradient-to-r from-blue-600 to-indigo-600 mr-3 shadow-sm">
+                    <span class="material-icons text-white">alarm</span>
+                  </div>
+                  <div>
+                    <h3 class="text-base font-bold text-gray-800">Contratos próximos a vencer</h3>
+                    <p class="text-xs text-gray-500">Monitor de vencimientos</p>
+                  </div>
+                </div>
+                <div class="flex items-center justify-center bg-gradient-to-r from-indigo-50 to-blue-50 text-indigo-700 text-sm px-3 py-1 rounded-lg font-medium shadow-sm">
+                  <span class="material-icons mr-1" style="font-size: 14px">people</span>
+                  <span id="semaforoCounter">3</span>
+                </div>
+              </div>
+              
+              <!-- Los indicadores se generarán dinámicamente en JavaScript -->
+              <div id="semaforoList" class="bg-white p-3 rounded-xl shadow-sm">
+                <!-- Todo el contenido se genera dinámicamente desde renderSemaforo() -->
+              </div>
+            </div>
+          </div>
+          
+          <!-- Columna derecha: Información detallada -->
+          <div class="lg:col-span-2">
+            <div class="bg-white rounded-2xl p-5 shadow-sm">
+              <!-- Alerta semáforo sin el texto "Estado:" -->
+              <div class="flex justify-end mb-3">
+                <div id="semaforoStatusPill" class="table-pill ok">Vence en 120d</div>
+              </div>
+          
+          <!-- Contenido principal -->
+          <div class="space-y-4">
+            <!-- Panel compacto con todas las secciones -->
+            <div class="bg-white p-4 rounded-xl border border-gray-100">
+                
+                <!-- Nombre contratista -->
+                <div id="fc-nombre-header" class="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl border border-gray-200 py-3 px-4 flex items-center justify-center shadow-sm mb-5">
+                  <span id="fc-nombre-icon" class="inline-flex items-center justify-center w-8 h-8 rounded-full text-white mr-3 shadow-sm" style="background:#0ea5a4"><span class="material-icons text-sm">person</span></span>
+                  <h4 id="fc-nombre-text" class="text-lg font-semibold text-gray-800 flex-1 text-center">Nombre Contratista</h4>
+                </div>
+
+                <!-- Fila 1: Aspectos generales + presupuestales -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4 mb-5">
+                  <!-- Aspectos generales -->
+                  <div class="section-card-group" style="--section-color: #8b5cf6">
+                    <div class="flex items-center mb-3">
+                      <span class="inline-flex items-center justify-center w-5 h-5 rounded-full bg-violet-100 text-violet-600 mr-2">
+                        <span class="material-icons text-sm">article</span>
+                      </span>
+                      <h4 class="text-xs uppercase tracking-wide text-gray-700 font-semibold">Aspectos generales</h4>
+                    </div>
+                    <div class="grid grid-cols-1 gap-3">
+                      <!-- Número de contrato primero -->
+                      <div id="fc-numero" class="bg-white rounded-lg border border-gray-100 px-3 py-2 shadow-sm hover:shadow-md transition-shadow duration-200">
+                        <div class="text-xs text-gray-500">Número contrato</div>
+                        <div class="text-sm font-semibold text-gray-800">-</div>
+                      </div>
+                      <!-- Plazo y Documento ID en fila -->
+                      <div class="grid grid-cols-2 gap-3">
+                        <div id="fc-plazo" class="bg-white rounded-lg border border-gray-100 px-3 py-2 shadow-sm hover:shadow-md transition-shadow duration-200">
+                          <div class="text-xs text-gray-500">Plazo</div>
+                          <div class="text-sm font-semibold text-gray-800">-</div>
+                        </div>
+                        <div id="fc-doc" class="bg-white rounded-lg border border-gray-100 px-3 py-2 shadow-sm hover:shadow-md transition-shadow duration-200">
+                          <div class="text-xs text-gray-500">Documento ID</div>
+                          <div class="text-sm font-semibold text-gray-800">-</div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <!-- Aspectos presupuestales -->
+                  <div class="section-card-group" style="--section-color: #6366f1">
+                    <div class="flex items-center mb-3">
+                      <span class="inline-flex items-center justify-center w-5 h-5 rounded-full bg-indigo-100 text-indigo-600 mr-2">
+                        <span class="material-icons text-sm">receipt</span>
+                      </span>
+                      <h4 class="text-xs uppercase tracking-wide text-gray-700 font-semibold">Aspectos presupuestales</h4>
+                    </div>
+                    <div class="grid grid-cols-2 gap-3">
+                      <div id="fc-rc-numero" class="bg-white rounded-lg border border-gray-100 px-3 py-2 shadow-sm hover:shadow-md transition-shadow duration-200">
+                        <div class="text-xs text-gray-500">RC</div>
+                        <div class="text-sm font-semibold text-gray-800">-</div>
+                      </div>
+                      <div id="fc-cdp-numero" class="bg-white rounded-lg border border-gray-100 px-3 py-2 shadow-sm hover:shadow-md transition-shadow duration-200">
+                        <div class="text-xs text-gray-500">CDP</div>
+                        <div class="text-sm font-semibold text-gray-800">-</div>
+                      </div>
+                      <div id="fc-rc-fecha" class="bg-white rounded-lg border border-gray-100 px-3 py-2 shadow-sm hover:shadow-md transition-shadow duration-200">
+                        <div class="text-xs text-gray-500">Fecha RC</div>
+                        <div class="text-sm font-semibold text-gray-800">-</div>
+                      </div>
+                      <div id="fc-cdp-fecha" class="bg-white rounded-lg border border-gray-100 px-3 py-2 shadow-sm hover:shadow-md transition-shadow duration-200">
+                        <div class="text-xs text-gray-500">Fecha CDP</div>
+                        <div class="text-sm font-semibold text-gray-800">-</div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Fila 2: Vigencia contrato + cuenta cobro -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4">
+                  <!-- Vigencia Contrato -->
+                  <div class="section-card-group" style="--section-color: #10b981">
+                    <div class="flex items-center mb-3">
+                      <span class="inline-flex items-center justify-center w-5 h-5 rounded-full bg-emerald-100 text-emerald-600 mr-2">
+                        <span class="material-icons text-sm">event</span>
+                      </span>
+                      <h4 class="text-xs uppercase tracking-wide text-gray-700 font-semibold">Vigencia Contrato</h4>
+                    </div>
+                    <div class="grid grid-cols-2 gap-3">
+                      <div id="fc-inicio" class="bg-white rounded-lg border border-gray-100 px-3 py-2 shadow-sm hover:shadow-md transition-shadow duration-200">
+                        <div class="text-xs text-gray-500">Inicio contrato</div>
+                        <div class="text-sm font-semibold text-gray-800">-</div>
+                      </div>
+                      <div id="fc-fin" class="bg-white rounded-lg border border-gray-100 px-3 py-2 shadow-sm hover:shadow-md transition-shadow duration-200">
+                        <div class="text-xs text-gray-500">Fin contrato</div>
+                        <div class="text-sm font-semibold text-gray-800">-</div>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <!-- Cuenta de cobro -->
+                  <div class="section-card-group" style="--section-color: #64748b">
+                    <div class="flex items-center mb-3">
+                      <span class="inline-flex items-center justify-center w-5 h-5 rounded-full bg-slate-100 text-slate-600 mr-2">
+                        <span class="material-icons text-sm">receipt_long</span>
+                      </span>
+                      <h4 class="text-xs uppercase tracking-wide text-gray-700 font-semibold">Cuenta de cobro</h4>
+                    </div>
+                    <div class="grid grid-cols-2 gap-3">
+                      <div id="fc-fecha-corte" class="bg-white rounded-lg border border-gray-100 px-3 py-2 shadow-sm hover:shadow-md transition-shadow duration-200">
+                        <div class="text-xs text-gray-500">Fecha de corte</div>
+                        <div class="text-sm font-semibold text-gray-800">-</div>
+                      </div>
+                      <div id="fc-ultimo-cobro" class="bg-white rounded-lg border border-gray-100 px-3 py-2 shadow-sm hover:shadow-md transition-shadow duration-200">
+                        <div class="text-xs text-gray-500">Último cobro</div>
+                        <div class="text-sm font-semibold text-gray-800">-</div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Aspectos financieros como fila inferior completa -->
+                <div class="mt-5 section-card-group" style="--section-color: #f59e0b">
+                  <div class="flex items-center mb-3">
+                    <span class="inline-flex items-center justify-center w-5 h-5 rounded-full bg-amber-100 text-amber-600 mr-2">
+                      <span class="material-icons text-sm">payments</span>
+                    </span>
+                    <h4 class="text-xs uppercase tracking-wide text-gray-700 font-semibold">Aspectos financieros</h4>
+                  </div>
+                  <div class="grid grid-cols-3 gap-3">
+                    <div id="fc-valor-inicial" class="bg-white rounded-lg border border-gray-100 px-3 py-2 shadow-sm hover:shadow-md transition-shadow duration-200">
+                      <div class="text-xs text-gray-500">Valor inicial</div>
+                      <div class="text-sm font-semibold text-gray-800">-</div>
+                    </div>
+                    <div id="fc-adiciones" class="bg-white rounded-lg border border-gray-100 px-3 py-2 shadow-sm hover:shadow-md transition-shadow duration-200">
+                      <div class="text-xs text-gray-500">Adiciones</div>
+                      <div class="text-sm font-semibold text-gray-800">-</div>
+                    </div>
+                    <div id="fc-valor-mensual" class="bg-white rounded-lg border border-gray-100 px-3 py-2 shadow-sm hover:shadow-md transition-shadow duration-200">
+                      <div class="text-xs text-gray-500">Valor mensual</div>
+                      <div class="text-sm font-semibold text-gray-800">-</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Layout compacto para listado y gráfico -->
+      <section class="grid grid-cols-1 lg:grid-cols-4 gap-6 mb-6">
+        <!-- Contractors list -->
+        <div class="lg:col-span-3 bg-white p-4 rounded-2xl shadow-sm">
+          <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-3">
+            <div class="flex items-center gap-2">
+              <div class="flex items-center justify-center w-10 h-10 rounded-lg bg-gradient-to-r from-purple-600 to-indigo-600 mr-2 shadow-sm">
+                <span class="material-icons text-white">group</span>
+              </div>
+              <div>
+                <h3 class="text-base font-bold text-gray-800">Listado de contratistas</h3>
+                <p class="text-xs text-gray-500">Ordenado por estado y días restantes</p>
+              </div>
+            </div>
+            <div class="flex items-center gap-2 mt-2 sm:mt-0">
+              <select id="filterSelect" class="border rounded text-sm px-3 py-1">
+                <option value="all">Ver todos</option>
+              </select>
+              <button id="btnShowAll" class="px-3 py-1 bg-gray-200 text-gray-700 text-sm rounded-md hover:bg-gray-300 transition-colors">
+                <span class="flex items-center">
+                  <span class="material-icons text-sm mr-1">list</span>
+                  Ver todos
+                </span>
+              </button>
+              <button id="btnRefresh" class="px-3 py-1 bg-blue-600 text-white text-sm rounded-md hover:bg-blue-700 transition-colors">
+                <span class="flex items-center">
+                  <span class="material-icons text-sm mr-1">refresh</span>
+                  Recargar
+                </span>
+              </button>
+            </div>
+          </div>
+          <div id="contractorsTable" class="overflow-auto max-h-[400px] bg-white p-2 rounded-xl shadow-inner">
+            <!-- tabla generada dinámicamente -->
+          </div>
+        </div>
+
+        <!-- Payment compliance chart -->
+        <div class="lg:col-span-1 bg-white p-4 rounded-2xl shadow-sm">
+          <h3 class="text-sm font-medium text-gray-700 mb-3">Cumplimiento de pagos</h3>
+          <div style="height: 280px">
+            <canvas id="paymentsChart"></canvas>
+          </div>
+        </div>
+      </section>
+
+    </main>
+  </div>
+
+  <!-- Protección de sesión -->
+  <script type="module" src="../lib/ui.js"></script>
+  <script type="module" src="../lib/session-guard.js"></script>
+  <script type="module" src="../lib/session-indicator.js"></script>
+  <script type="module">
+    import { initSidebar } from '../pages-scripts/sidebar.js';
+    try{ const el = document.querySelector('aside.sidebar'); if(el) initSidebar(el); }catch(e){}
+  </script>
+  <script type="module" src="../pages-scripts/contratistas.js"></script>
+  <script type="module">
+    import { renderSidebar } from '../pages-scripts/sidebar-component.js';
+    try{ renderSidebar('#shared-sidebar'); }catch(e){}
+  </script>
+</body>
+</html>

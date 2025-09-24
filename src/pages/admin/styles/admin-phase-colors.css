@@ -1,0 +1,28 @@
+/* Paleta de colores sutiles para fases */
+:root {
+  --phase-color-1: #e8f0fe;
+  --phase-color-2: #e5f2ff;
+  --phase-color-3: #e3f8ff;
+  --phase-color-4: #e0f7fa;
+  --phase-color-5: #e0f2f1;
+  --phase-color-6: #e8f5e9;
+  --phase-color-7: #f1f8e9;
+  --phase-color-8: #f9fbe7;
+  --phase-color-9: #fff8e1;
+  --phase-color-10: #fff3e0;
+  --phase-color-11: #fbe9e7;
+  --phase-color-12: #f9e4f3;
+
+  --phase-border-1: #c5d9f8;
+  --phase-border-2: #bde0ff;
+  --phase-border-3: #b3e5fc;
+  --phase-border-4: #b2ebf2;
+  --phase-border-5: #b2dfdb;
+  --phase-border-6: #c8e6c9;
+  --phase-border-7: #dcedc8;
+  --phase-border-8: #f0f4c3;
+  --phase-border-9: #ffecb3;
+  --phase-border-10: #ffe0b2;
+  --phase-border-11: #ffccbc;
+  --phase-border-12: #f8bbd0;
+}

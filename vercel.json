@@ -1,0 +1,22 @@
+{
+  "version": 2,
+  "builds": [
+    { "src": "public/**/*", "use": "@vercel/static" },
+    { "src": "src/pages/**/*", "use": "@vercel/static" },
+    { "src": "src/lib/**/*", "use": "@vercel/static" },
+    { "src": "src/pages-scripts/**/*", "use": "@vercel/static" },
+    { "src": "src/styles/**/*", "use": "@vercel/static" },
+    { "src": "src/assets/**/*", "use": "@vercel/static" }
+  ],
+  "routes": [
+    { "src": "^/$", "dest": "/src/pages/dashboard.html" },
+    { "src": "^/lib/(.*)$", "dest": "/src/lib/$1" },
+    { "src": "^/pages-scripts/(.*)$", "dest": "/src/pages-scripts/$1" },
+    { "src": "^/styles/(.*)$", "dest": "/src/styles/$1" },
+    { "src": "^/src/(.*)$", "dest": "/src/$1" },
+    { "src": "^/public/(.*)$", "dest": "/public/$1" },
+    { "src": "/api/(.*)", "dest": "/api/$1" },
+    { "handle": "filesystem" },
+    { "src": "^/(.*)$", "dest": "/src/pages/$1" }
+  ]
+}

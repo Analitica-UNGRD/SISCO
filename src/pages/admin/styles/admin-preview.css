@@ -1,0 +1,444 @@
+/* Preview Panel Styles - Compact Modern Design */
+
+/* Position preview panel correctly within dual-panel */
+#previewPanel {
+  position: static !important;
+  top: auto !important;
+  right: auto !important;
+  transform: none !important;
+  width: 100% !important;
+  height: auto !important;
+  max-height: none !important;
+  z-index: 1;
+  margin-top: 0;
+  overflow-y: visible;
+  padding: 0;
+  background: #ffffff; /* Fondo principal en blanco */
+  border-radius: 16px;
+  border: 1px solid rgba(2,6,23,0.06);
+  /* Stronger elevated shadow to better distinguish the preview panel */
+  box-shadow: 0 18px 48px rgba(2,6,23,0.12), 0 6px 18px rgba(2,6,23,0.06) inset;
+  /* gentle emphasis ring when focused/active (accessible, non-intrusive) */
+  transition: box-shadow 200ms ease, transform 160ms ease;
+}
+
+  /* Main preview container */
+  .preview-container {
+    background: #ffffff; /* Mantener el panel blanco */
+    border-radius: 16px;
+    overflow: hidden;
+    height: auto;
+    position: relative;
+    max-height: calc(100vh - 4rem); /* Límite de altura para evitar scroll */
+  }
+
+  /* Slight uplift on hover to make the panel feel interactive without changing behavior */
+  #previewPanel:hover,
+  .preview-container:hover {
+    transform: translateY(-6px);
+    box-shadow: 0 26px 60px rgba(2,6,23,0.16), 0 8px 22px rgba(2,6,23,0.08) inset;
+  }
+
+  /* Small focus-visible outline for keyboard users */
+  #previewPanel:focus-within {
+    box-shadow: 0 20px 46px rgba(2,6,23,0.12), 0 4px 12px rgba(34,197,94,0.06) inset;
+  }
+
+  .preview-container::before {
+    /* ligero overlay neutro para dar profundidad */
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(180deg, rgba(2,6,23,0.02) 0%, rgba(2,6,23,0.01) 100%);
+    pointer-events: none;
+  }
+
+  /* Empty preview state - más compacto */
+  .empty-preview {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 2rem 1.5rem;
+    min-height: 300px;
+  }
+
+  .empty-preview-icon {
+    background: rgba(2,6,23,0.06);
+    border-radius: 50%;
+    width: 60px;
+    height: 60px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 1rem;
+  }
+
+  .empty-preview-icon .material-icons {
+    font-size: 2rem;
+    color: #374151; /* icono oscuro */
+  }
+
+  .empty-preview-title {
+    color: #0f172a;
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+  }
+
+  .empty-preview-text {
+    color: rgba(15,23,42,0.7);
+    font-size: 0.85rem;
+    line-height: 1.4;
+    max-width: 320px;
+  }
+
+  /* Contractor preview - compacto */
+  .contractor-preview {
+    padding: 1rem;
+    position: relative;
+    z-index: 1;
+    overflow-y: auto;
+    max-height: calc(100vh - 6rem);
+  }
+
+  /* Header expandido con información personal */
+  .preview-header-expanded {
+    padding: 1rem;
+    margin-bottom: 1rem;
+    border-bottom: 1px solid rgba(2,6,23,0.04);
+  }
+
+  .preview-photo-info {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 1rem;
+  }
+
+  .preview-basic-info {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .preview-personal-info {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.5rem;
+  }
+
+  .preview-info-row {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: rgba(2,6,23,0.03);
+    border-radius: 6px;
+    padding: 0.4rem 0.6rem;
+    border: 1px solid rgba(2,6,23,0.06);
+  }
+
+  .preview-info-row .material-icons {
+    font-size: 0.9rem;
+    color: rgba(15,23,42,0.6);
+    flex-shrink: 0;
+  }
+
+  .preview-info-label {
+    font-size: 0.7rem;
+    color: rgba(15,23,42,0.8);
+    font-weight: 600;
+    min-width: 35px;
+    flex-shrink: 0;
+  }
+
+  .preview-info-input {
+    background: transparent !important;
+    color: #0f172a !important; /* texto oscuro */
+    border: none !important;
+    font-weight: 400 !important;
+    font-size: 0.75rem !important;
+    padding: 0 !important;
+    width: 100% !important;
+    pointer-events: none;
+    user-select: text;
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  /* Field labels en las secciones */
+  .preview-field-label {
+    font-size: 0.65rem;
+    color: rgba(15,23,42,0.7);
+    font-weight: 500;
+    min-width: 45px;
+    flex-shrink: 0;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+  }
+
+  .preview-photo {
+    width: 50px;
+    height: 50px;
+    background: #f3f4f6; /* gris claro para avatar */
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 2px solid rgba(2,6,23,0.04);
+    flex-shrink: 0;
+  }
+
+  .preview-photo .material-icons {
+    font-size: 1.5rem;
+    color: #374151; /* icono oscuro */
+  }
+
+  .preview-name-input {
+    font-size: 1.1rem !important;
+    font-weight: 600 !important;
+    border: none !important;
+    background: transparent !important;
+    color: #0f172a !important;
+    padding: 0 !important;
+    width: 100% !important;
+    margin-bottom: 0.5rem;
+  }
+
+  /* Grid compacto */
+  .preview-compact-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.75rem;
+  }
+
+  .preview-compact-section {
+    background: #ffffff; /* por defecto blanco, colores por sección abajo */
+    border-radius: 8px;
+    padding: 0.75rem;
+    border: 1px solid rgba(2,6,23,0.06);
+  }
+
+  /* Colores suaves por sección para distinguir rápidamente */
+  .preview-compact-grid .preview-compact-section:nth-child(1) {
+    background: #eef2ff; /* azul muy claro */
+  }
+  .preview-compact-grid .preview-compact-section:nth-child(2) {
+    background: #ecfdf5; /* verde muy claro */
+  }
+  .preview-compact-grid .preview-compact-section:nth-child(3) {
+    background: #fffbeb; /* amarillo/pálido */
+  }
+  .preview-compact-grid .preview-compact-section:nth-child(4) {
+    background: #f8fafc; /* gris claro */
+  }
+
+  .preview-compact-section,
+  .preview-compact-section * {
+    color: #0f172a; /* texto oscuro dentro de secciones */
+  }
+
+  .preview-section-title {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: #0f172a;
+    margin: 0 0 0.5rem 0;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  .preview-section-title .material-icons {
+    font-size: 1rem;
+    color: rgba(15,23,42,0.7);
+  }
+
+  /* Mini fields compactos */
+  .preview-mini-fields {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+  }
+
+  .preview-mini-field {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: rgba(2,6,23,0.02);
+    border-radius: 4px;
+    padding: 0.3rem 0.5rem;
+    border: 1px solid rgba(2,6,23,0.04);
+  }
+
+  .preview-mini-field .material-icons {
+    font-size: 0.9rem;
+    color: rgba(15,23,42,0.6);
+    flex-shrink: 0;
+  }
+
+  .preview-mini-input {
+    background: transparent !important;
+    color: #0f172a !important;
+    border: none !important;
+    font-weight: 400 !important;
+    font-size: 0.75rem !important;
+    padding: 0 !important;
+    width: 100% !important;
+    pointer-events: none;
+    user-select: text;
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .preview-mini-input.preview-currency {
+    font-weight: 600 !important;
+    color: #b45309 !important; /* color destacado para moneda */
+  }
+
+  /* Resumen compacto */
+  .preview-summary-compact {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+  }
+
+  .preview-stat {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: rgba(2,6,23,0.03);
+    border-radius: 4px;
+    padding: 0.3rem 0.5rem;
+    border: 1px solid rgba(2,6,23,0.04);
+  }
+
+  .preview-stat .material-icons {
+    font-size: 1rem;
+    color: #f59e0b; /* mantener ícono visible */
+    flex-shrink: 0;
+  }
+
+  .preview-stat-content {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    flex: 1;
+  }
+
+  .preview-stat-value {
+    font-size: 0.8rem;
+    color: #0f172a;
+    font-weight: 600;
+    line-height: 1;
+  }
+
+  .preview-stat-label {
+    font-size: 0.65rem;
+    color: rgba(15,23,42,0.7);
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+    font-weight: 500;
+    line-height: 1;
+  }
+
+  /* Status badge compacto */
+  .preview-status-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    padding: 0.3rem 0.6rem;
+    border-radius: 12px;
+    font-size: 0.7rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+    box-shadow: 0 2px 6px rgba(2,6,23,0.06);
+    border: 1px solid rgba(2,6,23,0.06);
+  }
+
+  .preview-status-badge .material-icons {
+    font-size: 0.8rem;
+  }
+
+  /* Responsive Design para pantallas más pequeñas */
+  @media (max-width: 1200px) {
+    .preview-compact-grid {
+      grid-template-columns: 1fr;
+      gap: 0.5rem;
+    }
+  
+    .preview-compact-section {
+      padding: 0.5rem;
+    }
+  
+    .contractor-preview {
+      padding: 0.75rem;
+    }
+  }
+
+  @media (max-width: 992px) {
+    .preview-header-compact {
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      gap: 0.75rem;
+    }
+  
+    .preview-compact-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  @media (max-width: 768px) {
+    #previewPanel {
+      margin-top: 1rem;
+      border-radius: 12px;
+    }
+
+    .contractor-preview {
+      padding: 0.75rem;
+      max-height: none;
+    }
+
+    .preview-compact-grid {
+      grid-template-columns: 1fr;
+      gap: 0.5rem;
+    }
+
+    .preview-mini-field {
+      padding: 0.25rem 0.4rem;
+    }
+
+    .preview-mini-input {
+      font-size: 0.7rem !important;
+    }
+  }
+
+  /* Remove any stray decorative pseudo-elements on floating debug/preview buttons
+     (fixes thin line that can appear from ::before/::after on these fixed buttons) */
+  #debug-toggle-btn::before,
+  #debug-toggle-btn::after,
+  #togglePreviewBtn::before,
+  #togglePreviewBtn::after {
+    display: none !important;
+    content: none !important;
+  }
+
+  /* In case a generic fixed-button rule draws a thin line, ensure floating rounded buttons
+     do not inherit border-top or similar styles */
+  #debug-toggle-btn,
+  #togglePreviewBtn {
+    border-top: none !important;
+    outline: none !important;
+  }

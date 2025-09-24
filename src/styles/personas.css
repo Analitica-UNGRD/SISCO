@@ -1,0 +1,10 @@
+/* Personas list - reuse dashboard theme */
+@import './dashboard.css';
+
+.personas-list{margin-top:18px;display:flex;flex-direction:column;gap:10px}
+.persona-item{background:var(--dash-card);padding:12px;border-radius:8px;display:flex;justify-content:space-between;align-items:center}
+.persona-meta{color:rgba(230,238,248,0.85)}
+.persona-actions button{background:transparent;border:1px solid rgba(255,255,255,0.04);color:var(--dash-text);padding:6px 10px;border-radius:8px;cursor:pointer}
+.persona-actions button:hover{background:rgba(255,255,255,0.02)}
+
+.loading{padding:18px;color:rgba(230,238,248,0.8)}

@@ -1,0 +1,175 @@
+<!-- Contratos Component -->
+<section id="section-contrato" class="form-section mt-4">
+  <div class="form-section-header">
+    <h3><span class="material-icons">description</span> Información contractual</h3>
+    <span class="material-icons toggle-icon">expand_more</span>
+  </div>
+  <div class="form-section-content">
+    <form id="formContrato" class="space-y-4" novalidate>
+      <div class="field-group field-group-row-3">
+        <div class="field-required">
+          <label class="block text-sm font-medium text-gray-700">Persona (FK)</label>
+          <div class="input-wrapper">
+            <!-- Visible display for persona name (readonly) - not submitted -->
+            <input name="persona_display" id="c_persona_id" placeholder="Selecciona persona" class="mt-1 p-2 border rounded w-full bg-gray-50" aria-required="false" readonly />
+            <!-- Hidden input that actually holds persona_id for form submission -->
+            <input type="hidden" name="persona_id" id="c_persona_id_hidden" />
+          </div>
+        </div>
+        <div class="field-required">
+          <label class="block text-sm font-medium text-gray-700">Número contrato</label>
+          <div class="input-wrapper">
+            <input name="Numero_contrato" id="c_Numero_contrato" placeholder="Ej: 2025-001" class="mt-1 p-2 border rounded w-full" required />
+            <input type="hidden" name="contrato_id" id="c_contrato_id" />
+          </div>
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700">Tipo vinculación</label>
+          <div class="input-wrapper">
+            <select name="Tipo_vinculacion" id="c_Tipo_vinculacion" class="mt-1 p-2 border rounded w-full">
+              <option value="">-- Seleccione --</option>
+              <option value="Contratista">Contratista</option>
+              <option value="Planta">Planta</option>
+              <option value="Otro">Otro</option>
+            </select>
+            <input name="Tipo_vinculacion_custom" id="c_Tipo_vinculacion_custom" placeholder="Especifique tipo de vinculación" class="mt-2 p-2 border rounded w-full hidden" />
+          </div>
+        </div>
+      </div>
+      
+      <div>
+        <label class="block text-sm font-medium text-gray-700">Objeto del contrato</label>
+        <div class="input-wrapper">
+          <textarea name="Objeto" id="c_Objeto" placeholder="Objeto del contrato" rows="2" class="mt-1 p-2 border rounded w-full"></textarea>
+        </div>
+      </div>
+      
+      <div class="field-group field-group-row-3">
+        <div>
+          <label class="block text-sm font-medium text-gray-700">Inicio</label>
+          <div class="input-wrapper">
+            <input name="Inicio" id="c_Inicio" type="date" placeholder="AAAA-MM-DD" class="mt-1 p-2 border rounded w-full" />
+          </div>
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700">Fin</label>
+          <div class="input-wrapper">
+            <input name="Fin" id="c_Fin" type="date" placeholder="AAAA-MM-DD" class="mt-1 p-2 border rounded w-full" />
+          </div>
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700">Plazo (meses)</label>
+          <div class="input-wrapper">
+            <input name="Plazo_meses" id="c_Plazo_meses" type="number" placeholder="0" class="mt-1 p-2 border rounded w-full" />
+          </div>
+        </div>
+      </div>
+      
+      <div class="field-group field-group-row-2">
+        <div>
+          <label class="block text-sm font-medium text-gray-700">Valor total</label>
+          <div class="input-wrapper">
+            <input name="Valor_total" id="c_Valor_total" type="number" placeholder="0" class="mt-1 p-2 border rounded w-full" />
+          </div>
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700">Valor mensual</label>
+          <div class="input-wrapper">
+            <input name="Valor_mensual" id="c_Valor_mensual" type="number" placeholder="0" class="mt-1 p-2 border rounded w-full" />
+          </div>
+        </div>
+      </div>
+      
+      <div class="bg-gray-50 rounded-md p-2">
+        <div class="pt-0 space-y-4">
+          <div class="text-sm font-medium text-gray-700">Información presupuestal y adicional</div>
+          <div class="field-group field-group-row-2">
+            <div>
+              <label class="block text-sm font-medium text-gray-700">Origen fondo</label>
+              <div class="input-wrapper">
+                <select name="Origen_fondo" id="c_Origen_fondo" class="mt-1 p-2 border rounded w-full">
+                  <option value="">-- Seleccione --</option>
+                  <option value="FNGRD">FNGRD</option>
+                  <option value="UNGRD">UNGRD</option>
+                  <option value="Otro">Otro</option>
+                </select>
+                <input name="Origen_fondo_custom" id="c_Origen_fondo_custom" placeholder="Especifique origen" class="mt-2 p-2 border rounded w-full hidden" />
+              </div>
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700">Supervisor</label>
+              <div class="input-wrapper">
+                <input name="Supervisor" id="c_Supervisor" placeholder="Supervisor" class="mt-1 p-2 border rounded w-full" />
+              </div>
+            </div>
+          </div>
+          
+          <div class="field-group field-group-row-2">
+            <div>
+              <label class="block text-sm font-medium text-gray-700">Número CDP</label>
+              <div class="input-wrapper">
+                <input name="Numero_CDP" id="c_Numero_CDP" placeholder="Número CDP" class="mt-1 p-2 border rounded w-full" />
+              </div>
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700">Fecha CDP</label>
+              <div class="input-wrapper">
+                <input name="Fecha_CDP" id="c_Fecha_CDP" type="date" placeholder="AAAA-MM-DD" class="mt-1 p-2 border rounded w-full" />
+              </div>
+            </div>
+          </div>
+          
+          <div class="field-group field-group-row-2">
+            <div>
+              <label class="block text-sm font-medium text-gray-700">Número RC</label>
+              <div class="input-wrapper">
+                <input name="Numero_RC" id="c_Numero_RC" placeholder="Número RC" class="mt-1 p-2 border rounded w-full" />
+              </div>
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700">Fecha RC</label>
+              <div class="input-wrapper">
+                <input name="Fecha_RC" id="c_Fecha_RC" type="date" placeholder="AAAA-MM-DD" class="mt-1 p-2 border rounded w-full" />
+              </div>
+            </div>
+          </div>
+          
+          <div class="field-group field-group-row-2">
+            <div>
+              <label class="block text-sm font-medium text-gray-700">Estado</label>
+              <div class="input-wrapper">
+                <select name="Estado" id="c_Estado" class="mt-1 p-2 border rounded w-full">
+                  <option value="Vigente">Vigente</option>
+                  <option value="Finalizado">Finalizado</option>
+                  <option value="Suspendido">Suspendido</option>
+                </select>
+              </div>
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700">Carpeta Drive URL</label>
+              <div class="input-wrapper">
+                <input name="Carpeta_Drive_URL" id="c_Carpeta_Drive_URL" placeholder="URL de Google Drive" class="mt-1 p-2 border rounded w-full" />
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <div class="flex justify-end gap-2">
+        <button type="button" id="btnEditarContrato" class="bg-yellow-600 text-white px-4 py-2 rounded flex items-center gap-1 hover:bg-yellow-700">
+          <span class="material-icons text-sm">edit</span>
+          <span>Editar Contrato</span>
+        </button>
+        <button type="button" id="btnGuardarNuevo" class="bg-green-600 text-white px-4 py-2 rounded flex items-center gap-1 hover:bg-green-700">
+          <span class="material-icons text-sm">add</span>
+          <span>Guardar Nuevo</span>
+        </button>
+        <button type="submit" class="bg-indigo-600 text-white px-4 py-2 rounded flex items-center gap-1 hover:bg-indigo-700 hidden">
+          <span class="material-icons text-sm">save</span>
+          <span>Guardar Contrato</span>
+        </button>
+      </div>
+      <div id="contratoResult" class="mt-3 text-sm"></div>
+    </form>
+  </div>
+</section>
