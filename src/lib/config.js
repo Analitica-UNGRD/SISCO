@@ -47,11 +47,13 @@ try {
 
 /** 
  * URL base resuelta según la lógica de prioridad:
- * 1. Override desde window
- * 2. Proxy de desarrollo si estamos en ambiente local
- * 3. URL de producción de Apps Script
+ * 1. Override desde window (window.APP_CONFIG_OVERRIDE.BASE_URL)
+ * 2. Preferir el proxy relativo de la misma origin (/api) para producción y despliegues
+ *    (esto evita problemas de CORS al llamar directamente al Apps Script desde el cliente)
+ * 3. Si por alguna razón necesitas apuntar directamente al Apps Script, usa
+ *    window.APP_CONFIG_OVERRIDE.BASE_URL = APPS_SCRIPT_EXEC
  */
-const RESOLVED_BASE = _fromWindow || (useProxy ? DEFAULT_DEV_PROXY : APPS_SCRIPT_EXEC);
+const RESOLVED_BASE = _fromWindow || DEFAULT_DEV_PROXY;
 
 /**
  * Configuración global de la aplicación
