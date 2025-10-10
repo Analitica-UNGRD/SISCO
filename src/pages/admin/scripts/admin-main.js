@@ -146,11 +146,13 @@ class AdminComponentManager {
         case 'contractual':
           const datosBasicos = await this.loadComponent('datos-basicos');
           const contratos = await this.loadComponent('contratos');
+          const contractualObligaciones = await this.loadComponent('contractual-obligaciones');
           componentHtml = `
             <div class="dual-panel">
               <div class="form-panel-section">
                 ${datosBasicos}
                 ${contratos}
+                ${contractualObligaciones}
               </div>
               <div class="preview-panel-section">
                 ${previewHtml}
@@ -290,18 +292,34 @@ class AdminComponentManager {
 
   // Initialize section scripts
   async initializeSectionScripts(sectionName) {
+    if (this.currentComponentInstances) {
+      Object.values(this.currentComponentInstances).forEach(inst => {
+        if (inst && typeof inst.destroy === 'function') {
+          try {
+            inst.destroy();
+          } catch (error) {
+            console.warn('No se pudo destruir un componente previo', error);
+          }
+        }
+      });
+    }
+
     const componentInstances = {};
     
     switch (sectionName) {
       case 'contractual':
         const DatosBasicos = await this.loadComponentScript('datos-basicos');
         const Contratos = await this.loadComponentScript('contratos');
+        const ContractualObligaciones = await this.loadComponentScript('contractual-obligaciones');
         
         if (DatosBasicos) {
           componentInstances.datosBasicos = new DatosBasicos(this);
         }
         if (Contratos) {
           componentInstances.contratos = new Contratos(this);
+        }
+        if (ContractualObligaciones) {
+          componentInstances.contractualObligaciones = new ContractualObligaciones(this);
         }
         break;
         
@@ -600,6 +618,18 @@ class AdminComponentManager {
         i.classList.remove('bg-gray-50');
       }
     });
+
+    try {
+      const contextEvent = new CustomEvent('admin:context-updated', {
+        detail: {
+          persona: this.ctx.persona || null,
+          contrato: this.ctx.contrato || null
+        }
+      });
+      document.dispatchEvent(contextEvent);
+    } catch (error) {
+      console.warn('No se pudo notificar el cambio de contexto (versión resumida)', error);
+    }
   }
 
   // Section navigation
@@ -985,6 +1015,9 @@ class AdminComponentManager {
           if (this.currentComponentInstances?.contratos) {
             await this.currentComponentInstances.contratos.handleSave();
           }
+          if (this.currentComponentInstances?.contractualObligaciones) {
+            await this.currentComponentInstances.contractualObligaciones.handleSave();
+          }
           toast('Datos guardados correctamente', 'success');
           break;
         case 'cuentas-cobro':
@@ -1240,6 +1273,18 @@ class AdminComponentManager {
     const contratoDisplay = document.getElementById('current-contrato');
     if (contratoDisplay && this.ctx.contrato) {
       contratoDisplay.textContent = this.ctx.contrato.objeto || 'Sin objeto';
+    }
+
+    try {
+      const contextEvent = new CustomEvent('admin:context-updated', {
+        detail: {
+          persona: this.ctx.persona || null,
+          contrato: this.ctx.contrato || null
+        }
+      });
+      document.dispatchEvent(contextEvent);
+    } catch (error) {
+      console.warn('No se pudo notificar el cambio de contexto', error);
     }
   }
 
