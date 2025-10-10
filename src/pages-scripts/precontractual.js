@@ -31,6 +31,15 @@ const SPECIAL_EVENT_VARIANTS = [
 ];
 
 const SPECIAL_EVENT_LOOKUP = new Map();
+const FINALIZING_EVENT_KEYWORDS = [
+    'finalizado',
+    'finalizacion',
+    'finalización',
+    'cierre administrativo',
+    'cierre etapa',
+    'cierre del proceso',
+    'cierre de etapa'
+].map(normalizeEventName);
 
 function normalizeEventName(name) {
     return (name || '')
@@ -49,6 +58,15 @@ SPECIAL_EVENT_VARIANTS.forEach(variant => {
 
 function getVariantForEvent(eventName) {
     return SPECIAL_EVENT_LOOKUP.get(normalizeEventName(eventName)) || null;
+}
+
+function isFinalizingEvent(eventName = '') {
+    const normalized = normalizeEventName(eventName);
+    if (!normalized) {
+        return false;
+    }
+
+    return FINALIZING_EVENT_KEYWORDS.some(keyword => normalized.includes(keyword));
 }
 
 class PrecontractualManager {
@@ -355,8 +373,11 @@ class PrecontractualManager {
             duracionDias = Math.ceil((Date.now() - fechaInicio.getTime()) / (1000 * 60 * 60 * 24));
         }
 
-        const eventosFinalizados = eventosOrdenados.filter(e => e.Estado === 'Finalizado');
-        const estado = eventosOrdenados.length > 0 && eventosFinalizados.length === eventosOrdenados.length
+        const hasFinalizingEvent = eventosOrdenados.some(evt => (
+            evt?.Estado === 'Finalizado' || isFinalizingEvent(evt?.Evento)
+        ));
+        const todosFinalizados = eventosOrdenados.length > 0 && eventosOrdenados.every(evt => evt.Estado === 'Finalizado');
+        const estado = hasFinalizingEvent || todosFinalizados
             ? 'Finalizado'
             : 'En proceso';
 
@@ -394,7 +415,7 @@ class PrecontractualManager {
             return fallback;
         }
 
-        if (events.some(e => e.Estado === 'Finalizado')) {
+        if (events.some(e => e.Estado === 'Finalizado' || isFinalizingEvent(e?.Evento))) {
             return 'Finalizado';
         }
 
@@ -725,7 +746,8 @@ class PrecontractualManager {
                 const phasePills = phaseBlocks.map(block => {
                     const badge = block.variantBadge ? `<span class="phase-pill-badge ${block.variantKey || 'base'}">${block.variantBadge}</span>` : '';
                     const pillClass = block.variantClass ? ` ${block.variantClass}` : '';
-                    return `<span class="phase-pill${pillClass}">${block.displayLabel}${badge}</span>`;
+                    const statusClass = block.status ? ` status-${block.status.toLowerCase().replace(/\s+/g, '-')}` : '';
+                    return `<span class="phase-pill${pillClass}${statusClass}">${block.displayLabel}${badge}</span>`;
                 }).join('');
                 const phasePillsHtml = phasePills ? `<div class="stage-phase-pills">${phasePills}</div>` : '';
 
@@ -836,9 +858,10 @@ class PrecontractualManager {
                         ? `<div class="fase-correcciones">Correcciones: ${eventosCount}</div>`
                         : '';
                     const variantClass = block.variantClass ? ` ${block.variantClass}` : '';
+                    const statusClass = estadoClass ? ` status-${estadoClass}` : '';
 
                     return `
-                        <div class="fase-item${variantClass}" data-candidato="${candidato.persona_id}" data-etapa="${etapa.etapa}" data-fase="${block.baseLabel}" data-variant="${block.variantKey || 'base'}">
+                        <div class="fase-item${variantClass}${statusClass}" data-candidato="${candidato.persona_id}" data-etapa="${etapa.etapa}" data-fase="${block.baseLabel}" data-variant="${block.variantKey || 'base'}">
                             <div class="fase-header">
                                 <div class="fase-nombre">${block.displayLabel}</div>
                                 <div class="fase-estado ${estadoClass}">${estadoFase}</div>
