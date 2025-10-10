@@ -1,6 +1,8 @@
 // Script para la página de contratistas (conectado con backend)
 import { initSidebar } from './sidebar.js';
 let contratosData = [];
+const obligacionesCache = new Map();
+let currentObligacionesContratoId = null;
 
 // Función para realizar peticiones al backend Apps Script
 async function fetchFromBackend(path, payload = {}) {
@@ -494,6 +496,180 @@ function renderTable(list){
   container.innerHTML = ''; container.appendChild(table);
 }
 
+function setObligacionesMessage(message, icon = 'assignment') {
+  const container = document.getElementById('obligacionesTable');
+  if (!container) return;
+  container.innerHTML = `
+    <div class="flex flex-col items-center justify-center py-8 text-center text-sm text-gray-500">
+      <span class="material-icons text-3xl text-gray-300 mb-2">${icon}</span>
+      ${message}
+    </div>
+  `;
+}
+
+function createMultilineCell(value, options = {}) {
+  const td = document.createElement('td');
+  td.className = options.className || 'p-2 align-top text-gray-700';
+  const text = typeof value === 'string' ? value.trim() : (value ?? '').toString().trim();
+  if (!text) {
+    td.textContent = options.emptyLabel || '-';
+    if (options.emptyClass) td.classList.add(options.emptyClass);
+    return td;
+  }
+
+  text.split(/\r?\n+/).forEach((segment, index) => {
+    const span = document.createElement('div');
+    span.textContent = segment.trim();
+    if (options.segmentClass) span.className = options.segmentClass;
+    td.appendChild(span);
+  });
+  return td;
+}
+
+function createEvidenceCell(obligacion) {
+  const td = document.createElement('td');
+  td.className = 'p-2 align-top text-gray-700';
+  const evidenciaUrl = (obligacion.Evidencia_URL || '').toString().trim();
+  const evidenciaTexto = (obligacion.Producto || '').toString().trim();
+
+  if (evidenciaUrl) {
+    const link = document.createElement('a');
+    link.href = evidenciaUrl;
+    link.target = '_blank';
+    link.rel = 'noopener noreferrer';
+    link.className = 'text-blue-600 hover:underline break-words';
+    link.textContent = evidenciaUrl;
+    td.appendChild(link);
+
+    if (evidenciaTexto) {
+      const note = document.createElement('div');
+      note.className = 'text-xs text-gray-500 mt-1 break-words';
+      note.textContent = evidenciaTexto;
+      td.appendChild(note);
+    }
+    return td;
+  }
+
+  if (evidenciaTexto) {
+    evidenciaTexto.split(/\r?\n+/).forEach(seg => {
+      const span = document.createElement('div');
+      span.textContent = seg.trim();
+      td.appendChild(span);
+    });
+    return td;
+  }
+
+  td.textContent = 'Sin evidencias';
+  td.classList.add('text-gray-400');
+  return td;
+}
+
+function renderObligacionesTable(contrato, obligaciones) {
+  const container = document.getElementById('obligacionesTable');
+  if (!container) return;
+
+  if (!obligaciones || obligaciones.length === 0) {
+    setObligacionesMessage('No se registran obligaciones para este contrato.', 'check_circle');
+    return;
+  }
+
+  const table = document.createElement('table');
+  table.className = 'min-w-full text-sm';
+  table.innerHTML = `
+    <thead>
+      <tr class="text-left text-xs uppercase tracking-wide text-gray-500">
+        <th class="p-2">Obligación</th>
+        <th class="p-2">Actividades realizadas</th>
+        <th class="p-2">Evidencias</th>
+      </tr>
+    </thead>
+  `;
+
+  const tbody = document.createElement('tbody');
+  obligaciones.forEach((obligacion) => {
+    const tr = document.createElement('tr');
+    tr.className = 'border-t';
+
+    tr.appendChild(createMultilineCell(obligacion.Descripcion, { segmentClass: 'break-words', emptyLabel: 'Sin descripción' }));
+    tr.appendChild(createMultilineCell(obligacion.Actividades_realizadas || obligacion.Actividades, { segmentClass: 'break-words', emptyLabel: 'Sin actividades reportadas', emptyClass: 'text-gray-400' }));
+    tr.appendChild(createEvidenceCell(obligacion));
+
+    tbody.appendChild(tr);
+  });
+
+  table.appendChild(tbody);
+
+  container.innerHTML = '';
+  if (contrato && (contrato.Numero_contrato || contrato.persona)) {
+    const context = document.createElement('div');
+    context.className = 'text-xs text-gray-500 mb-2 flex items-center gap-2';
+    const icon = document.createElement('span');
+    icon.className = 'material-icons text-sm text-gray-400';
+    icon.textContent = 'bookmark';
+    context.appendChild(icon);
+
+    if (contrato.persona) {
+      const personaSpan = document.createElement('span');
+      personaSpan.className = 'font-medium text-gray-600';
+      personaSpan.textContent = contrato.persona;
+      context.appendChild(personaSpan);
+    }
+
+    if (contrato.Numero_contrato) {
+      const separator = document.createElement('span');
+      separator.className = 'text-gray-400';
+      separator.textContent = '·';
+      context.appendChild(separator);
+
+      const contratoSpan = document.createElement('span');
+      contratoSpan.textContent = `Contrato ${contrato.Numero_contrato}`;
+      context.appendChild(contratoSpan);
+    }
+
+    container.appendChild(context);
+  }
+  container.appendChild(table);
+}
+
+async function updateObligacionesView(contrato) {
+  const container = document.getElementById('obligacionesTable');
+  if (!container) return;
+
+  if (!contrato || !contrato.contrato_id) {
+    currentObligacionesContratoId = null;
+    setObligacionesMessage('Selecciona un contrato para ver las obligaciones asociadas.', 'assignment');
+    return;
+  }
+
+  const contratoId = contrato.contrato_id;
+  currentObligacionesContratoId = contratoId;
+
+  // Mostrar estado de carga mientras consultamos la API
+  container.innerHTML = `
+    <div class="flex flex-col items-center justify-center py-8 text-center text-sm text-gray-500">
+      <div class="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-500 mb-3"></div>
+      Consultando obligaciones del contrato...
+    </div>
+  `;
+
+  try {
+    let obligaciones = obligacionesCache.get(contratoId);
+    if (!obligaciones) {
+      const response = await fetchFromBackend('getObligacionesByContrato', { contrato_id: contratoId });
+      obligaciones = response?.items || response?.data || [];
+      obligacionesCache.set(contratoId, obligaciones);
+    }
+
+    if (currentObligacionesContratoId !== contratoId) return;
+    renderObligacionesTable(contrato, obligaciones);
+  } catch (error) {
+    console.error('Error al cargar obligaciones del contrato:', error);
+    if (currentObligacionesContratoId === contratoId) {
+      setObligacionesMessage('No fue posible cargar las obligaciones. Intenta nuevamente más tarde.', 'error');
+    }
+  }
+}
+
 function attachEvents(){
   const filterEl = document.getElementById('filterSelect');
   if(filterEl){
@@ -572,6 +748,9 @@ function attachEvents(){
         // Recargar datos reales
         const newData = await loadAllContratos();
         contratosData = newData;
+  obligacionesCache.clear();
+  updateObligacionesView(null);
+  updateDetail(null);
         
         // Actualizar UI
         renderTable(contratosData);
@@ -640,6 +819,7 @@ function attachEvents(){
 }
 
 function updateDetail(item){
+  updateObligacionesView(item);
   // Populate header name and field cards with provided item (or placeholders)
   const headerText = document.getElementById('fc-nombre-text');
   const headerIcon = document.getElementById('fc-nombre-icon');
@@ -1061,6 +1241,8 @@ document.addEventListener('DOMContentLoaded', async () => {
   try {
     // Cargar datos reales
     contratosData = await loadAllContratos();
+  obligacionesCache.clear();
+  updateObligacionesView(null);
     
     // Si no hay datos, mostrar mensaje y detener la ejecución
     if (!contratosData || contratosData.length === 0) {
@@ -1186,6 +1368,9 @@ export async function refreshContratos() {
   try {
     const newData = await loadAllContratos();
     contratosData = newData;
+    obligacionesCache.clear();
+    updateObligacionesView(null);
+    updateDetail(null);
     renderTable(contratosData);
     renderSemaforo(contratosData);
     updateChart(contratosData);

@@ -30,6 +30,10 @@
   border-left-color: var(--success-color);
 }
 
+#section-contractual-obligaciones {
+  border-left-color: var(--error-color);
+}
+
 #section-precontractual-content {
   border-left-color: var(--neutral-500);
 }
