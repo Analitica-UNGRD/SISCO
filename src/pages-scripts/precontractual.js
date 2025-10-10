@@ -292,7 +292,8 @@ class PrecontractualManager {
     }
     
     processEtapa(etapaData) {
-        const eventos = etapaData.eventos.sort((a, b) => new Date(a.Fecha) - new Date(b.Fecha));
+    const eventos = etapaData.eventos.sort((a, b) => new Date(a.Fecha) - new Date(b.Fecha));
+    const correcciones = eventos.filter(e => String(e.Evento || '').trim() === 'Solicitud de Correccion').length;
         
         // Encontrar todas las fechas de la etapa
         const fechasEtapa = eventos.map(e => new Date(e.Fecha));
@@ -321,7 +322,8 @@ class PrecontractualManager {
             fechaFin: estado === 'Finalizado' ? fechaFin : null,
             duracionDias: duracionDias,
             eventos: eventos,
-            intento: Math.max(...eventos.map(e => e.Intento || 1))
+            intento: Math.max(...eventos.map(e => e.Intento || 1)),
+            correcciones
         };
     }
     
@@ -449,6 +451,7 @@ class PrecontractualManager {
         
         this.filteredData.forEach((candidato, index) => {
             const maxDuracion = Math.max(...candidato.etapas.map(e => e.duracionDias));
+            const totalCorrecciones = candidato.etapas.reduce((sum, etapa) => sum + (etapa.correcciones || 0), 0);
             
             html += `
                 <div class="candidate-timeline-item bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-4">
@@ -479,11 +482,18 @@ class PrecontractualManager {
                 const fechaInicio = etapa.fechaInicio ? etapa.fechaInicio.toLocaleDateString('es-ES') : '-';
                 const fechaFin = etapa.fechaFin ? etapa.fechaFin.toLocaleDateString('es-ES') : 'En curso';
                 
+                const intentoBadge = etapa.intento > 1 ? `<span class="stage-intento">Intento ${etapa.intento}</span>` : '';
+                const correccionesCount = etapa.correcciones || 0;
+                const correccionesBadge = correccionesCount > 0 ? `<span class="stage-correcciones">Correcciones: ${correccionesCount}</span>` : '';
+                const stageMetaContent = [intentoBadge, correccionesBadge].filter(Boolean).join('');
+                const stageMetaHtml = stageMetaContent ? `<div class="stage-label-meta">${stageMetaContent}</div>` : '';
+
                 html += `
                     <div class="stage-item">
                         <div class="stage-label tooltip" data-tooltip="Etapa ${etapaIndex + 1} de ${candidato.etapas.length}">
                             ${etapa.etapa}
                         </div>
+                        ${stageMetaHtml}
                         <div class="stage-bar-container">
                             <div class="stage-bar-fill stage-${etapa.estado.toLowerCase().replace(' ', '-')}" 
                                  style="width: ${width}%"
@@ -505,6 +515,7 @@ class PrecontractualManager {
                     <div class="mt-4 pt-4 border-t border-gray-100 flex justify-between items-center text-sm text-gray-500">
                         <span>${candidato.etapas.length} etapa${candidato.etapas.length !== 1 ? 's' : ''}</span>
                         <span>Promedio: ${Math.round(candidato.tiempoTotal / candidato.etapas.length)} días por etapa</span>
+                        <span>Correcciones: ${totalCorrecciones}</span>
                     </div>
                 </div>
             `;
@@ -532,6 +543,7 @@ class PrecontractualManager {
             const totalEtapas = candidato.etapas.length;
             const etapasFinalizadas = candidato.etapas.filter(e => e.estado === 'Finalizado').length;
             const porcentajeProgreso = totalEtapas > 0 ? Math.round((etapasFinalizadas / totalEtapas) * 100) : 0;
+            const totalCorrecciones = candidato.etapas.reduce((sum, etapa) => sum + (etapa.correcciones || 0), 0);
             
             // Determinar estado general
             let estadoGeneral = 'En proceso';
@@ -562,6 +574,8 @@ class PrecontractualManager {
                 const fasesHtml = Array.from(fasesPorNombre.entries()).map(([fase, eventos]) => {
                     const ultimoEvento = eventos.sort((a, b) => new Date(b.Fecha) - new Date(a.Fecha))[0];
                     const estadoFase = ultimoEvento ? ultimoEvento.Estado : 'Pendiente';
+                    const correccionesFase = eventos.filter(ev => String(ev.Evento || '').trim() === 'Solicitud de Correccion').length;
+                    const correccionesHtml = correccionesFase > 0 ? `<div class="fase-correcciones">Correcciones: ${correccionesFase}</div>` : '';
                     
                     return `
                         <div class="fase-item" data-candidato="${candidato.persona_id}" data-etapa="${etapa.etapa}" data-fase="${fase}">
@@ -570,6 +584,7 @@ class PrecontractualManager {
                                 <div class="fase-estado ${estadoFase.toLowerCase().replace(' ', '-')}">${estadoFase}</div>
                             </div>
                             <div class="fase-eventos-count">${eventos.length} evento${eventos.length !== 1 ? 's' : ''}</div>
+                            ${correccionesHtml}
                         </div>
                     `;
                 }).join('');
@@ -584,6 +599,8 @@ class PrecontractualManager {
                                         <span class="material-icons">schedule</span>
                                         ${etapa.duracionDias} días
                                     </span>
+                                    ${etapa.intento > 1 ? `<span class="etapa-intento"><span class="material-icons">repeat</span>Intento ${etapa.intento}</span>` : ''}
+                                    ${(etapa.correcciones || 0) > 0 ? `<span class="etapa-correcciones"><span class="material-icons">edit_note</span>${etapa.correcciones} correccion${etapa.correcciones !== 1 ? 'es' : ''}</span>` : ''}
                                     <span class="etapa-estado ${etapa.estado.toLowerCase().replace(' ', '-')}">${etapa.estado}</span>
                                 </div>
                             </div>
@@ -624,6 +641,10 @@ class PrecontractualManager {
                                 <span class="total-tiempo">
                                     <span class="material-icons">timer</span>
                                     Total: ${candidato.tiempoTotal} días
+                                </span>
+                                <span class="total-correcciones">
+                                    <span class="material-icons">edit_note</span>
+                                    Correcciones: ${totalCorrecciones}
                                 </span>
                                 <span class="estado-general ${estadoColor}">
                                     <span class="material-icons">flag</span>

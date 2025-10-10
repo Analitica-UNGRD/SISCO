@@ -67,6 +67,11 @@
   color: var(--neutral-600);
 }
 
+.phase-details-badge.correcciones {
+  background-color: #fee2e2;
+  color: #b91c1c;
+}
+
 .phase-details-count {
   font-size: 0.875rem;
   color: var(--neutral-500);
@@ -97,6 +102,13 @@
 .phase-details-empty p {
   margin: 0;
   font-size: 1rem;
+}
+
+.phase-corrections {
+  font-size: 0.75rem;
+  color: var(--danger-color, #b91c1c);
+  font-weight: 600;
+  margin-top: 0.25rem;
 }
 
 /* Event Cards */
@@ -172,6 +184,11 @@
 .event-status.en-proceso {
   background-color: var(--warning-light);
   color: var(--warning-color);
+}
+
+.event-status.correccion {
+  background-color: #fee2e2;
+  color: #b91c1c;
 }
 
 /* Animation */

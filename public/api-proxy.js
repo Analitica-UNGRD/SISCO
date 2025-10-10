@@ -40,12 +40,41 @@ document.addEventListener('DOMContentLoaded', function() {
     
   // Interceptar las peticiones a /api-proxy y redirigirlas al proxy
   const originalFetch = window.fetch;
-  window.fetch = function(url, options) {
-    if (url === '/api-proxy') {
-      // Preferir la ruta relativa /api (función serverless en Vercel) y
-      // caer a localhost en desarrollo si es necesario.
-      return originalFetch('/api', options).catch(() => originalFetch('http://localhost:3000/api', options));
+  window.fetch = async function(input, init) {
+    let requestInit = init;
+    let targetUrl = '';
+
+    if (typeof input === 'string') {
+      targetUrl = input;
+    } else if (input instanceof Request) {
+      const cloned = input.clone();
+      targetUrl = cloned.url;
+      requestInit = requestInit ? { ...requestInit } : {
+        method: cloned.method,
+        headers: new Headers(cloned.headers)
+      };
+      if (requestInit.body === undefined && cloned.method && !/^(GET|HEAD)$/i.test(cloned.method)) {
+        requestInit.body = await cloned.text();
+      }
     }
-    return originalFetch(url, options);
+
+    const normalizedUrl = targetUrl ? new URL(targetUrl, window.location.origin) : null;
+    const isSameOriginProxy = normalizedUrl && normalizedUrl.origin === window.location.origin && normalizedUrl.pathname === '/api-proxy';
+
+    if (isSameOriginProxy) {
+      const fallbackFetch = async (urlToFetch) => originalFetch(urlToFetch, requestInit);
+
+      try {
+        const resp = await fallbackFetch('/api');
+        if (resp && resp.ok) {
+          return resp;
+        }
+      } catch (err) {
+        // Ignorar y probar el proxy local
+      }
+      return fallbackFetch('http://localhost:3000/api');
+    }
+
+    return originalFetch(input, init);
   };
 });

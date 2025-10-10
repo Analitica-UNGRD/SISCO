@@ -23,8 +23,12 @@ export default class AdminPrecontractual {
     this.faseSelect = document.getElementById('pre_Fase');
     this.personaIdInput = document.getElementById('pre_persona_id');
     this.fechaInput = document.getElementById('pre_Fecha');
+    this.eventoSelect = document.getElementById('pre_Evento');
+    this.intentoInput = document.getElementById('pre_Intento');
     this.eventosList = document.getElementById('precontractualEventsList');
     this.loadButton = document.getElementById('btnLoadPrecontractual');
+
+    this.applyIntentoLock(true);
   }
 
   bindFormEvents() {
@@ -45,6 +49,7 @@ export default class AdminPrecontractual {
     // Evento cambio de etapa para cargar fases
     this.etapaSelect?.addEventListener('change', async (e) => {
       await this.loadFases(e.target.value);
+      this.recalculateIntentoValue();
     });
 
     // Botón cargar eventos
@@ -65,7 +70,7 @@ export default class AdminPrecontractual {
     });
 
     // Special handling when Evento = 'Cierre administrativo'
-    const eventoSelect = document.getElementById('pre_Evento');
+    const eventoSelect = this.eventoSelect;
     const estadoSelect = document.getElementById('pre_Estado');
     const observacionesInput = document.getElementById('pre_Observaciones');
     const faseSelect = document.getElementById('pre_Fase');
@@ -73,6 +78,12 @@ export default class AdminPrecontractual {
     if (eventoSelect) {
       eventoSelect.addEventListener('change', (e) => {
         const val = e.target.value;
+        if (val === 'Repite') {
+          this.applyIntentoLock(false);
+          this.recalculateIntentoValue();
+        } else {
+          this.applyIntentoLock(true);
+        }
         if (val === 'Cierre administrativo') {
           // Prefill suggestion Estado = Finalizado but allow change
           if (estadoSelect && estadoSelect.value !== 'Finalizado') {
@@ -110,6 +121,48 @@ export default class AdminPrecontractual {
         }
       });
     }
+  }
+
+  applyIntentoLock(lock) {
+    if (!this.intentoInput) return;
+    if (lock) {
+      this.intentoInput.value = '1';
+      this.intentoInput.setAttribute('disabled', 'disabled');
+      this.intentoInput.classList.add('bg-gray-100', 'cursor-not-allowed');
+    } else {
+      this.intentoInput.removeAttribute('disabled');
+      this.intentoInput.classList.remove('bg-gray-100', 'cursor-not-allowed');
+      if (!this.intentoInput.value || Number(this.intentoInput.value) < 2) {
+        this.intentoInput.value = '2';
+      }
+    }
+  }
+
+  recalculateIntentoValue() {
+    if (!this.eventoSelect || !this.intentoInput) return;
+    if (this.eventoSelect.value !== 'Repite') {
+      this.applyIntentoLock(true);
+      return;
+    }
+
+    const personaId = this.personaIdInput ? this.personaIdInput.value.trim() : '';
+    const etapaSeleccionada = this.etapaSelect ? this.etapaSelect.value.trim() : '';
+    const eventosPersona = Array.isArray(this.eventos) ? this.eventos : [];
+
+    if (!personaId || !etapaSeleccionada || eventosPersona.length === 0) {
+      this.applyIntentoLock(false);
+      return;
+    }
+
+    const maxIntento = eventosPersona
+      .filter(evento => evento && evento.Etapa === etapaSeleccionada)
+      .reduce((max, evento) => {
+        const intento = Number(evento.Intento) || 1;
+        return intento > max ? intento : max;
+      }, 1);
+
+    this.applyIntentoLock(false);
+    this.intentoInput.value = String(Math.max(maxIntento + 1, 2));
   }
 
   setButtonLoading(button, loading, text) {
@@ -256,7 +309,8 @@ export default class AdminPrecontractual {
           }
         } catch (e) {}
 
-        this.loadEventosForCurrentPersona();
+  await this.loadEventosForCurrentPersona();
+  this.recalculateIntentoValue();
       } else {
         if (this.adminManager && typeof this.adminManager.showNotification === 'function') {
           this.adminManager.showNotification(`Error: ${response.error}`, 'error');
@@ -384,6 +438,7 @@ export default class AdminPrecontractual {
   async loadEventosForCurrentPersona() {
     const personaId = this.personaIdInput?.value;
     if (!personaId) {
+      this.eventos = [];
       this.eventosList.innerHTML = '<p class="text-gray-500 text-center">Seleccione una persona para ver sus eventos precontractuales</p>';
       return;
     }
@@ -393,13 +448,18 @@ export default class AdminPrecontractual {
       if (response.ok && response.items) {
         // Filtrar eventos por persona_id
         const eventosPersona = response.items.filter(evento => evento.persona_id === personaId);
+        this.eventos = eventosPersona;
         this.displayEventos(eventosPersona);
       } else {
         console.error('Error cargando eventos:', response.error);
+        this.eventos = [];
       }
     } catch (error) {
       console.error('Error cargando eventos:', error);
+      this.eventos = [];
     }
+
+    this.recalculateIntentoValue();
   }
 
   displayEventos(eventos) {
@@ -482,8 +542,9 @@ export default class AdminPrecontractual {
         if (preVisible) preVisible.value = preId;
       }
 
-      this.setDefaultDate();
-      this.clearFasesDropdown();
+    this.setDefaultDate();
+    this.clearFasesDropdown();
+    this.applyIntentoLock(true);
       
       // Limpiar errores
       const errorElements = this.form.querySelectorAll('.field-error');
@@ -511,8 +572,8 @@ export default class AdminPrecontractual {
       }
     } catch (e) {}
 
-    // Cargar eventos para la nueva persona
-    this.loadEventosForCurrentPersona();
+  // Cargar eventos para la nueva persona y actualizar sugerencia de intento
+  this.loadEventosForCurrentPersona();
   }
 
   // Método para limpiar el contexto de persona
@@ -521,8 +582,10 @@ export default class AdminPrecontractual {
       this.personaIdInput.value = '';
       this.personaIdInput.placeholder = 'Ninguna persona seleccionada';
     }
+    this.eventos = [];
     
     this.clearForm();
     this.eventosList.innerHTML = '<p class="text-gray-500 text-center">Seleccione una persona para ver sus eventos precontractuales</p>';
+    this.applyIntentoLock(true);
   }
 }

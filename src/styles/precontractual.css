@@ -147,6 +147,7 @@
 }
 
 .total-tiempo,
+.total-correcciones,
 .estado-general {
     display: flex;
     align-items: center;
@@ -160,6 +161,11 @@
 .total-tiempo {
     background-color: #e5e7eb;
     color: #374151;
+}
+
+.total-correcciones {
+    background-color: #fee2e2;
+    color: #b91c1c;
 }
 
 .estado-general {
@@ -273,6 +279,32 @@
     display: flex;
     gap: 16px;
     align-items: center;
+}
+
+.etapa-intento,
+.etapa-correcciones {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 4px 8px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 500;
+}
+
+.etapa-intento {
+    background-color: #dbeafe;
+    color: #1d4ed8;
+}
+
+.etapa-correcciones {
+    background-color: #fee2e2;
+    color: #b91c1c;
+}
+
+.etapa-intento .material-icons,
+.etapa-correcciones .material-icons {
+    font-size: 14px;
 }
 
 .etapa-duracion {
@@ -390,6 +422,13 @@
     cursor: pointer;
     transition: all 0.2s ease;
     background-color: white;
+}
+
+.fase-correcciones {
+    margin-top: 6px;
+    font-size: 12px;
+    color: #b91c1c;
+    font-weight: 500;
 }
 
 .fase-item:hover {
@@ -772,6 +811,35 @@
     min-width: 120px;
     font-size: 14px;
     color: #6b7280;
+}
+
+.stage-label-meta {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    font-size: 12px;
+    color: #4b5563;
+}
+
+.stage-label-meta span {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 2px 8px;
+    border-radius: 9999px;
+    background-color: #e5e7eb;
+    color: #374151;
+    font-weight: 500;
+}
+
+.stage-label-meta .stage-intento {
+    background-color: #dbeafe;
+    color: #1d4ed8;
+}
+
+.stage-label-meta .stage-correcciones {
+    background-color: #fee2e2;
+    color: #b91c1c;
 }
 
 .stage-bar-container {

@@ -522,6 +522,36 @@ body {
   color: var(--success-color);
 }
 
+.status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.25rem 0.6rem;
+  border-radius: var(--radius);
+  font-size: 0.75rem;
+  font-weight: 500;
+  background: var(--neutral-200);
+  color: var(--neutral-700);
+  text-transform: uppercase;
+}
+
+.status-pill.intento {
+  background: #dbeafe;
+  color: #1d4ed8;
+}
+
+.timeline-etapa-card .etapa-correcciones {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.25rem 0.6rem;
+  border-radius: var(--radius);
+  font-size: 0.75rem;
+  font-weight: 500;
+  background: #fee2e2;
+  color: #b91c1c;
+}
+
 /* Phases Container */
 .timeline-phases-container {
   margin-top: 0.5rem;

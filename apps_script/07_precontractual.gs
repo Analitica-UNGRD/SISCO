@@ -91,6 +91,13 @@ function handleCrearPrecontractual(payload) {
 		rowObj['Fase'] = fase;
 		rowObj['Estado'] = payload.Estado || 'En proceso';
 		rowObj['Evento'] = payload.Evento || '';
+		var eventoNombre = String(rowObj['Evento'] || '').trim();
+		var intentoValor = parseInt(payload.Intento, 10);
+		if (eventoNombre !== 'Repite') {
+			intentoValor = 1;
+		} else {
+			intentoValor = isNaN(intentoValor) ? 2 : Math.max(2, intentoValor);
+		}
 		// Server-side validation: if Evento is Cierre administrativo, Observaciones required
 		if (String(rowObj['Evento'] || '').trim() === 'Cierre administrativo') {
 			var obsVal = String(payload.Observaciones || '').trim();
@@ -99,7 +106,7 @@ function handleCrearPrecontractual(payload) {
 			}
 			rowObj['Observaciones'] = obsVal;
 		}
-		rowObj['Intento'] = payload.Intento || 1;
+		rowObj['Intento'] = intentoValor;
 		rowObj['Fecha'] = payload.Fecha || new Date();
 		rowObj['Responsable'] = payload.Responsable || email || '';
 		rowObj['Observaciones'] = payload.Observaciones || '';
@@ -131,12 +138,19 @@ function upsertPrecontractual(payload) {
 				'Fase': fase || '',
 				'Estado': payload.Estado || '',
 				'Evento': payload.Evento || '',
-				'Intento': payload.Intento || 1,
 				'Fecha': payload.Fecha ? parseDateISO(payload.Fecha) : '',
 				'Responsable': payload.Responsable || '',
 				'Observaciones': payload.Observaciones || '',
 				'Evidencia_URL': payload.Evidencia_URL || ''
 			};
+			var updEventoNombre = String(updates['Evento'] || '').trim();
+			var updIntento = parseInt(payload.Intento, 10);
+			if (updEventoNombre !== 'Repite') {
+				updates['Intento'] = 1;
+			} else {
+				updIntento = isNaN(updIntento) ? 2 : Math.max(2, updIntento);
+				updates['Intento'] = updIntento;
+			}
 			// Server-side validation for Cierre administrativo on update
 			if (String(updates['Evento'] || '').trim() === 'Cierre administrativo') {
 				var obsVal2 = String(updates['Observaciones'] || '').trim();
@@ -157,7 +171,14 @@ function upsertPrecontractual(payload) {
 		rowObj['Fase'] = fase;
 		rowObj['Estado'] = payload.Estado || 'En proceso';
 		rowObj['Evento'] = payload.Evento || '';
-		rowObj['Intento'] = payload.Intento || 1;
+		var newEventoNombre = String(rowObj['Evento'] || '').trim();
+		var newIntento = parseInt(payload.Intento, 10);
+		if (newEventoNombre !== 'Repite') {
+			newIntento = 1;
+		} else {
+			newIntento = isNaN(newIntento) ? 2 : Math.max(2, newIntento);
+		}
+		rowObj['Intento'] = newIntento;
 		rowObj['Fecha'] = payload.Fecha || new Date();
 		rowObj['Responsable'] = payload.Responsable || email || '';
 		rowObj['Observaciones'] = payload.Observaciones || '';

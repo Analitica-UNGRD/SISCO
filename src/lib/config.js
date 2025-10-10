@@ -19,10 +19,10 @@ const _fromWindow = (typeof window !== 'undefined' && window.APP_CONFIG_OVERRIDE
 /** URL del Apps Script en producción */
 const APPS_SCRIPT_EXEC = 'https://script.google.com/macros/s/AKfycbypTEHwHU5lxb4DvwpBufQTaJerA4kOXfGdHdqDMJqEat3dtO87L4m9GFFYkqDc41O04g/exec';
 
-/** URL del proxy de desarrollo local */
-// Prefer a relative API path so the same code works on Vercel (/api) and
-// in local development (falls back to localhost via api-proxy.js helper).
-const DEFAULT_DEV_PROXY = '/api';
+/** Ruta relativa utilizada en despliegues (Vercel) */
+const DEFAULT_RELATIVE_API = '/api';
+/** Ruta auxiliar que activa el helper api-proxy.js durante desarrollo local */
+const DEV_PROXY_PATH = '/api-proxy';
 
 /** 
  * Detecta hostnames locales/privados típicos 
@@ -53,7 +53,9 @@ try {
  * 3. Si por alguna razón necesitas apuntar directamente al Apps Script, usa
  *    window.APP_CONFIG_OVERRIDE.BASE_URL = APPS_SCRIPT_EXEC
  */
-const RESOLVED_BASE = _fromWindow || DEFAULT_DEV_PROXY;
+const resolvedDevPath = useProxy ? DEV_PROXY_PATH : DEFAULT_RELATIVE_API;
+
+const RESOLVED_BASE = _fromWindow || resolvedDevPath;
 
 /**
  * Configuración global de la aplicación

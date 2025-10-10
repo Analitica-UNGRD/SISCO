@@ -145,7 +145,8 @@ export default class AdminPrecontractualPreview {
     const { etapa, intento, events } = etapaGroup;
     
     // Sort events by date
-    const sortedEvents = events.sort((a, b) => new Date(a.Fecha) - new Date(b.Fecha));
+  const sortedEvents = events.sort((a, b) => new Date(a.Fecha) - new Date(b.Fecha));
+  const correctionsCount = sortedEvents.filter(e => String(e.Evento || '').trim() === 'Solicitud de Correccion').length;
     
     // Encontrar todas las fechas de la etapa
     const fechasEtapa = sortedEvents.map(e => new Date(e.Fecha));
@@ -209,6 +210,7 @@ export default class AdminPrecontractualPreview {
       isFinished,
       closure_por_evento: !!closure_por_evento,
       eventCount: events.length,
+      correctionsCount,
       _events: events,
       _fases: fasesArr
     };
@@ -247,7 +249,8 @@ export default class AdminPrecontractualPreview {
     }
 
   const phases = phaseLabels.map(label => {
-      const phaseEvents = sortedEvents.filter(e => String(e.Fase || '').trim() === String(label || '').trim());
+  const phaseEvents = sortedEvents.filter(e => String(e.Fase || '').trim() === String(label || '').trim());
+  const corrections = phaseEvents.filter(pe => String(pe.Evento || '').trim() === 'Solicitud de Correccion').length;
       let status = 'Pendiente';
       if (phaseEvents.some(pe => pe.Estado === 'Finalizado')) {
         status = 'Finalizado';
@@ -264,7 +267,7 @@ export default class AdminPrecontractualPreview {
       // determine representative date for phase (use latest Fecha if present)
       const dateVals = phaseEvents.map(pe => pe.Fecha).filter(Boolean).map(d => new Date(d));
       const repDate = dateVals.length ? new Date(Math.max(...dateVals.map(d=>d.getTime()))) : null;
-      return { label, status, current: !!isCurrent, count: phaseEvents.length, events: phaseEvents, date: repDate };
+  return { label, status, current: !!isCurrent, count: phaseEvents.length, corrections, events: phaseEvents, date: repDate };
     });
 
     return phases;
@@ -293,8 +296,9 @@ export default class AdminPrecontractualPreview {
     
     // Generate timeline visualization with clear hierarchy between etapas and fases
     const barsHtml = this.timelineData.map(item => {
-      const statusClass = item.isFinished ? 'finalizado' : 'en-proceso';
-      const intentoLabel = item.intento > 1 ? ` (Intento ${item.intento})` : '';
+  const statusClass = item.isFinished ? 'finalizado' : 'en-proceso';
+  const intentoLabel = item.intento > 1 ? ` (Intento ${item.intento})` : '';
+  const correctionsBadge = item.correctionsCount > 0 ? `<span class="etapa-correcciones">Correcciones: ${item.correctionsCount}</span>` : '';
       
       const startDateStr = item.startDate ? item.startDate.toLocaleDateString('es-CO') : 'N/A';
       const endDateStr = item.endDate ? item.endDate.toLocaleDateString('es-CO') : 'Hoy';
@@ -333,6 +337,7 @@ export default class AdminPrecontractualPreview {
               <div class="phase-info">
                 <div class="phase-date">${phaseDate}</div>
                 ${phase.status === 'Finalizado' ? `<div class="phase-status-badge phase-finalizado">Finalizado</div>` : ''}
+                ${phase.corrections > 0 ? `<div class="phase-corrections">Correcciones: ${phase.corrections}</div>` : ''}
               </div>
             </div>
           `;
@@ -355,6 +360,8 @@ export default class AdminPrecontractualPreview {
             <div class="etapa-title-section">
               <h5 class="etapa-title">${item.etapa}${intentoLabel}</h5>
               <span class="status-badge ${statusClass}">${item.status}</span>
+              ${item.intento > 1 ? `<span class="status-pill intento">Intento ${item.intento}</span>` : ''}
+              ${correctionsBadge}
             </div>
             <div class="etapa-dates">
               <span class="start-date">${startDateStr}</span>
@@ -419,6 +426,7 @@ export default class AdminPrecontractualPreview {
       if (!detailsEl) return;
 
       const events = phase.events || [];
+  const correctionsCount = events.filter(evt => String(evt.Evento || '').trim() === 'Solicitud de Correccion').length;
       
       // Create header with etapa and phase info
       const headerHtml = `
@@ -430,6 +438,7 @@ export default class AdminPrecontractualPreview {
               ${phase.status === 'Finalizado' ? 
                 `<span class="phase-details-badge finalizado">Finalizado</span>` : 
                 ''}
+              ${correctionsCount > 0 ? `<span class="phase-details-badge correcciones">Correcciones: ${correctionsCount}</span>` : ''}
             </div>
           </div>
           <div class="phase-details-count">${events.length} evento${events.length !== 1 ? 's' : ''}</div>
@@ -458,6 +467,11 @@ export default class AdminPrecontractualPreview {
       const rows = sortedEvents.map(ev => {
         const fecha = ev.Fecha ? new Date(ev.Fecha).toLocaleString('es-CO') : '-';
         const descripcion = ev.Observaciones || '';
+        const isCorrection = String(ev.Evento || '').trim() === 'Solicitud de Correccion';
+        const statusBadges = [
+          (ev.Estado === 'Finalizado') ? '<div class="event-status finalizado">Finalizado</div>' : '',
+          isCorrection ? '<div class="event-status correccion">Corrección solicitada</div>' : ''
+        ].filter(Boolean).join('');
         
         return `
           <div class="phase-event-card">
@@ -469,7 +483,7 @@ export default class AdminPrecontractualPreview {
               </div>
             </div>
             ${descripcion ? `<div class="event-description">${descripcion}</div>` : ''}
-            ${(ev.Estado === 'Finalizado') ? `<div class="event-status finalizado">Finalizado</div>` : ''}
+            ${statusBadges}
           </div>
         `;
       }).join('');
