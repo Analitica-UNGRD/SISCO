@@ -505,6 +505,22 @@ class PrecontractualManager {
             });
         });
 
+        const baseSequence = blocks.filter(block => !block.variantKey);
+        const lastActiveBaseIndex = baseSequence.reduce((last, block, idx) => (block.count > 0 ? idx : last), -1);
+
+        baseSequence.forEach((block, idx) => {
+            if (block.count === 0) {
+                if (block.hasVariants) {
+                    block.status = 'En proceso';
+                }
+                return;
+            }
+
+            if (idx < lastActiveBaseIndex) {
+                block.status = 'Finalizado';
+            }
+        });
+
         return blocks
             .filter(block => block.count > 0 || block.variantKey || block.hasVariants)
             .sort((a, b) => a.orderIndex - b.orderIndex || (a.variantKey ? 1 : -1));
@@ -653,6 +669,12 @@ class PrecontractualManager {
                 const counters = etapa.specialVariantCounters || {};
                 return sum + (counters.ajuste || 0);
             }, 0);
+            const subsanacionesBadge = totalSubsanaciones > 0
+                ? `<span class="total-subsanaciones"><span class="material-icons">assignment_late</span>Subsanaciones: ${totalSubsanaciones}</span>`
+                : '';
+            const ajustesBadge = totalAjustes > 0
+                ? `<span class="total-ajustes"><span class="material-icons">build</span>Ajustes: ${totalAjustes}</span>`
+                : '';
             const resumenEspeciales = [
                 `Correcciones: ${totalCorrecciones}`,
                 totalSubsanaciones > 0 ? `Subsanaciones: ${totalSubsanaciones}` : null,
@@ -766,6 +788,20 @@ class PrecontractualManager {
             const etapasFinalizadas = candidato.etapas.filter(e => e.estado === 'Finalizado').length;
             const porcentajeProgreso = totalEtapas > 0 ? Math.round((etapasFinalizadas / totalEtapas) * 100) : 0;
             const totalCorrecciones = candidato.etapas.reduce((sum, etapa) => sum + (etapa.correcciones || 0), 0);
+            const totalSubsanaciones = candidato.etapas.reduce((sum, etapa) => {
+                const counters = etapa.specialVariantCounters || {};
+                return sum + (counters.subsanacion || 0);
+            }, 0);
+            const totalAjustes = candidato.etapas.reduce((sum, etapa) => {
+                const counters = etapa.specialVariantCounters || {};
+                return sum + (counters.ajuste || 0);
+            }, 0);
+            const subsanacionesBadge = totalSubsanaciones > 0
+                ? `<span class="total-subsanaciones"><span class="material-icons">assignment_late</span>Subsanaciones: ${totalSubsanaciones}</span>`
+                : '';
+            const ajustesBadge = totalAjustes > 0
+                ? `<span class="total-ajustes"><span class="material-icons">build</span>Ajustes: ${totalAjustes}</span>`
+                : '';
             
             // Determinar estado general
             let estadoGeneral = 'En proceso';
@@ -871,16 +907,8 @@ class PrecontractualManager {
                                     <span class="material-icons">edit_note</span>
                                     Correcciones: ${totalCorrecciones}
                                 </span>
-                                ${totalSubsanaciones > 0 ? `
-                                <span class="total-subsanaciones">
-                                    <span class="material-icons">assignment_late</span>
-                                    Subsanaciones: ${totalSubsanaciones}
-                                </span>` : ''}
-                                ${totalAjustes > 0 ? `
-                                <span class="total-ajustes">
-                                    <span class="material-icons">build</span>
-                                    Ajustes: ${totalAjustes}
-                                </span>` : ''}
+                                ${subsanacionesBadge}
+                                ${ajustesBadge}
                                 <span class="estado-general ${estadoColor}">
                                     <span class="material-icons">flag</span>
                                     ${estadoGeneral}
