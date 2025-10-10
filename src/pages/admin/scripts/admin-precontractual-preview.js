@@ -1,4 +1,51 @@
 // Admin Precontractual Preview Component Script
+
+const SPECIAL_EVENT_VARIANTS = [
+  {
+    key: 'correccion',
+    matchers: ['solicitud de correccion', 'solicitud de corrección', 'correccion solicitada'],
+    displayLabel: 'Corrección solicitada',
+    badge: 'Se solicitó corrección',
+    className: 'phase-variant-correccion'
+  },
+  {
+    key: 'subsanacion',
+    matchers: ['solicitud de subsanacion', 'solicitud de subsanación', 'subsanacion solicitada'],
+    displayLabel: 'Subsanación solicitada',
+    badge: 'Se solicitó subsanación',
+    className: 'phase-variant-subsanacion'
+  },
+  {
+    key: 'ajuste',
+    matchers: ['solicitud de ajuste', 'solicitud de ajustes', 'ajuste solicitado'],
+    displayLabel: 'Ajuste solicitado',
+    badge: 'Se solicitó ajuste',
+    className: 'phase-variant-ajuste'
+  }
+];
+
+const SPECIAL_EVENT_LOOKUP = new Map();
+
+function normalizeEventName(name) {
+  return (name || '')
+    .toString()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .trim()
+    .toLowerCase();
+}
+
+SPECIAL_EVENT_VARIANTS.forEach(variant => {
+  variant.matchers.forEach(alias => {
+    SPECIAL_EVENT_LOOKUP.set(normalizeEventName(alias), variant);
+  });
+});
+
+function getVariantForEvent(eventName) {
+  const normalized = normalizeEventName(eventName);
+  return SPECIAL_EVENT_LOOKUP.get(normalized) || null;
+}
+
 export default class AdminPrecontractualPreview {
   constructor(adminManager) {
     this.adminManager = adminManager;
@@ -145,8 +192,9 @@ export default class AdminPrecontractualPreview {
     const { etapa, intento, events } = etapaGroup;
     
     // Sort events by date
-  const sortedEvents = events.sort((a, b) => new Date(a.Fecha) - new Date(b.Fecha));
-  const correctionsCount = sortedEvents.filter(e => String(e.Evento || '').trim() === 'Solicitud de Correccion').length;
+    const sortedEvents = events.sort((a, b) => new Date(a.Fecha) - new Date(b.Fecha));
+    const variantCounters = this.countVariantOccurrences(sortedEvents);
+    const correctionsCount = variantCounters.correccion || 0;
     
     // Encontrar todas las fechas de la etapa
     const fechasEtapa = sortedEvents.map(e => new Date(e.Fecha));
@@ -211,79 +259,168 @@ export default class AdminPrecontractualPreview {
       closure_por_evento: !!closure_por_evento,
       eventCount: events.length,
       correctionsCount,
+      specialVariantCounters: variantCounters,
       _events: events,
-      _fases: fasesArr
+      _fases: fasesArr,
+      phaseBlocks: this.buildPhaseBlocks(sortedEvents, fasesArr)
     };
   }
 
   // Extended: calculate per-phase statuses for this etapaGroup using phases metadata (fasesArr)
   calculatePhaseStatuses(etapaGroup, fasesArr) {
     const events = (etapaGroup && etapaGroup.events) || [];
-    // sort events by date asc
     const sortedEvents = events.slice().sort((a, b) => new Date(a.Fecha) - new Date(b.Fecha));
-
-    // Derive list of phase labels in order
-    let phaseLabels = [];
-    if (Array.isArray(fasesArr) && fasesArr.length > 0) {
-      phaseLabels = fasesArr.map(f => f.FaseEtiqueta);
-    } else {
-      // fallback: collect unique fases from events in order
-      const seen = new Set();
-      sortedEvents.forEach(e => { if (e.Fase && !seen.has(e.Fase)) { seen.add(e.Fase); phaseLabels.push(e.Fase); } });
-    }
-
-    // Determine latest event for overall current phase
-    const latestEvent = sortedEvents.length ? sortedEvents[sortedEvents.length - 1] : null;
-
-  // Determine current phase: prefer last event's phase, otherwise first non-finalized phase
-  const lastEvent = sortedEvents.length ? sortedEvents[sortedEvents.length - 1] : null;
-    let currentPhaseLabel = lastEvent ? String(lastEvent.Fase || '').trim() : null;
-
-    if (!currentPhaseLabel) {
-      // find first phase that is not finalized
-      for (let i = 0; i < phaseLabels.length; i++) {
-        const lbl = phaseLabels[i];
-        const evs = sortedEvents.filter(e => String(e.Fase || '').trim() === String(lbl || '').trim());
-        if (!evs.some(pe => pe.Estado === 'Finalizado')) { currentPhaseLabel = lbl; break; }
-      }
-    }
-
-  const phases = phaseLabels.map(label => {
-  const phaseEvents = sortedEvents.filter(e => String(e.Fase || '').trim() === String(label || '').trim());
-  const corrections = phaseEvents.filter(pe => String(pe.Evento || '').trim() === 'Solicitud de Correccion').length;
-      let status = 'Pendiente';
-      if (phaseEvents.some(pe => pe.Estado === 'Finalizado')) {
-        status = 'Finalizado';
-      } else if (phaseEvents.some(pe => pe.Estado === 'En proceso')) {
-        status = 'En proceso';
-      } else if (phaseEvents.length > 0) {
-        // any event for this phase but not finalized
-        status = 'En proceso';
-      } else if (latestEvent && String(latestEvent.Fase || '').trim() === String(label || '').trim()) {
-        status = (latestEvent.Estado === 'Finalizado') ? 'Finalizado' : 'En proceso';
-      }
-
-  const isCurrent = currentPhaseLabel && String(label || '').trim() === String(currentPhaseLabel).trim();
-      // determine representative date for phase (use latest Fecha if present)
-      const dateVals = phaseEvents.map(pe => pe.Fecha).filter(Boolean).map(d => new Date(d));
-      const repDate = dateVals.length ? new Date(Math.max(...dateVals.map(d=>d.getTime()))) : null;
-  return { label, status, current: !!isCurrent, count: phaseEvents.length, corrections, events: phaseEvents, date: repDate };
-    });
-
-    return phases;
+    return this.buildPhaseBlocks(sortedEvents, fasesArr);
   }
 
   // Return the list of phases to render: only those that have at least one event with Fecha or any events (diligenciados)
   getVisiblePhasesForRendering(etapaGroup, fasesArr) {
     const fases = this.calculatePhaseStatuses(etapaGroup, fasesArr || []);
-    // Only include phases that have at least one event with Fecha OR at least one event at all
-    const visible = fases.filter(f => {
-      if (!f) return false;
-      if (f.count && f.count > 0) return true; // has events
-      return false;
+    return fases.filter(f => f && (f.events.length > 0 || f.variantKey));
+  }
+
+  countVariantOccurrences(events = []) {
+    return events.reduce((acc, evt) => {
+      const variant = getVariantForEvent(evt?.Evento);
+      if (variant) {
+        acc[variant.key] = (acc[variant.key] || 0) + 1;
+      }
+      return acc;
+    }, {});
+  }
+
+  determinePhaseStatus(events = [], fallback = 'En proceso') {
+    if (!events || events.length === 0) {
+      return fallback;
+    }
+
+    if (events.some(e => e.Estado === 'Finalizado')) {
+      return 'Finalizado';
+    }
+
+    if (events.some(e => e.Estado === 'En proceso')) {
+      return 'En proceso';
+    }
+
+    return fallback;
+  }
+
+  partitionPhaseEvents(phaseEvents = []) {
+    const baseEvents = [];
+    const variantBuckets = new Map();
+
+    phaseEvents.forEach(evt => {
+      const variant = getVariantForEvent(evt?.Evento);
+      if (variant) {
+        if (!variantBuckets.has(variant.key)) {
+          variantBuckets.set(variant.key, []);
+        }
+        variantBuckets.get(variant.key).push(evt);
+      } else {
+        baseEvents.push(evt);
+      }
     });
 
-    return visible;
+    return { baseEvents, variantBuckets };
+  }
+
+  buildPhaseBlocks(sortedEvents = [], fasesArr = []) {
+    const events = Array.isArray(sortedEvents)
+      ? sortedEvents.slice().sort((a, b) => new Date(a.Fecha) - new Date(b.Fecha))
+      : [];
+
+    let phaseLabels = [];
+    if (Array.isArray(fasesArr) && fasesArr.length > 0) {
+      phaseLabels = fasesArr
+        .map(f => (f && f.FaseEtiqueta) ? String(f.FaseEtiqueta).trim() : '')
+        .filter(Boolean);
+    }
+
+    const seen = new Set(phaseLabels);
+    events.forEach(evt => {
+      const lbl = evt && evt.Fase ? String(evt.Fase).trim() : '';
+      if (lbl && !seen.has(lbl)) {
+        seen.add(lbl);
+        phaseLabels.push(lbl);
+      }
+    });
+
+    const latestEvent = events.length ? events[events.length - 1] : null;
+    const currentPhaseLabel = latestEvent && latestEvent.Fase ? String(latestEvent.Fase).trim() : null;
+    const latestVariant = latestEvent ? getVariantForEvent(latestEvent.Evento) : null;
+
+    const blocks = [];
+
+    phaseLabels.forEach((label, index) => {
+      const normalizedLabel = String(label || '').trim();
+      if (!normalizedLabel) {
+        return;
+      }
+
+      const phaseEvents = events.filter(evt => String(evt.Fase || '').trim() === normalizedLabel);
+      const { baseEvents, variantBuckets } = this.partitionPhaseEvents(phaseEvents);
+      const baseLatestEvent = baseEvents.length
+        ? baseEvents[baseEvents.length - 1]
+        : (phaseEvents.length ? phaseEvents[phaseEvents.length - 1] : null);
+
+      const baseDate = baseLatestEvent ? new Date(baseLatestEvent.Fecha) : null;
+      const baseStatus = this.determinePhaseStatus(baseEvents, phaseEvents.length ? 'En proceso' : 'Pendiente');
+
+      // Base block (even if no base events, to keep context)
+      blocks.push({
+        label: normalizedLabel,
+        displayLabel: normalizedLabel,
+        status: baseStatus,
+        current: normalizedLabel === currentPhaseLabel && !latestVariant,
+        count: baseEvents.length,
+        events: baseEvents,
+        date: baseDate,
+        corrections: (variantBuckets.get('correccion') || []).length,
+        variantKey: null,
+        variantBadge: null,
+        variantClass: null,
+        baseLabel: normalizedLabel,
+        alertText: '',
+        orderIndex: index * 10,
+        hasVariants: variantBuckets.size > 0
+      });
+
+      // Variant blocks (corrección, subsanación, ajuste, etc.)
+      variantBuckets.forEach((variantEvents, variantKey) => {
+        if (!variantEvents.length) {
+          return;
+        }
+
+        const variantConfig = SPECIAL_EVENT_VARIANTS.find(v => v.key === variantKey);
+        if (!variantConfig) {
+          return;
+        }
+
+        const variantLatest = variantEvents[variantEvents.length - 1];
+        const variantDate = variantLatest ? new Date(variantLatest.Fecha) : null;
+        blocks.push({
+          label: normalizedLabel,
+          displayLabel: `${normalizedLabel} · ${variantConfig.displayLabel}`,
+          status: this.determinePhaseStatus(variantEvents, 'En proceso'),
+          current: normalizedLabel === currentPhaseLabel && !!latestVariant && latestVariant.key === variantKey,
+          count: variantEvents.length,
+          events: variantEvents,
+          date: variantDate,
+          corrections: variantKey === 'correccion' ? variantEvents.length : 0,
+          variantKey,
+          variantBadge: variantConfig.badge,
+          variantClass: variantConfig.className,
+          baseLabel: normalizedLabel,
+          alertText: variantConfig.badge,
+          orderIndex: index * 10 + 1,
+          hasVariants: false
+        });
+      });
+    });
+
+    return blocks
+      .filter(block => block.count > 0 || block.variantKey || block.hasVariants)
+      .sort((a, b) => a.orderIndex - b.orderIndex || (a.variantKey ? 1 : -1));
   }
 
   renderTimeline() {
@@ -298,7 +435,18 @@ export default class AdminPrecontractualPreview {
     const barsHtml = this.timelineData.map(item => {
   const statusClass = item.isFinished ? 'finalizado' : 'en-proceso';
   const intentoLabel = item.intento > 1 ? ` (Intento ${item.intento})` : '';
-  const correctionsBadge = item.correctionsCount > 0 ? `<span class="etapa-correcciones">Correcciones: ${item.correctionsCount}</span>` : '';
+  const counters = item.specialVariantCounters || {};
+  const specialBadges = [];
+  if (counters.correccion) {
+    specialBadges.push(`<span class="etapa-correcciones correccion">Correcciones: ${counters.correccion}</span>`);
+  }
+  if (counters.subsanacion) {
+    specialBadges.push(`<span class="etapa-correcciones subsanacion">Subsanaciones: ${counters.subsanacion}</span>`);
+  }
+  if (counters.ajuste) {
+    specialBadges.push(`<span class="etapa-correcciones ajuste">Ajustes: ${counters.ajuste}</span>`);
+  }
+  const specialBadgesHtml = specialBadges.join('');
       
       const startDateStr = item.startDate ? item.startDate.toLocaleDateString('es-CO') : 'N/A';
       const endDateStr = item.endDate ? item.endDate.toLocaleDateString('es-CO') : 'Hoy';
@@ -313,17 +461,23 @@ export default class AdminPrecontractualPreview {
       let phasesContent = '';
       if (Array.isArray(visiblePhases) && visiblePhases.length) {
         const phasesHtml = visiblePhases.map((phase, idx) => {
-          // Solo mostrar finalizado o asignar un color según su posición
           const phaseClass = phase.status === 'Finalizado' ? 'phase-finalizado' : '';
           const currentClass = phase.current ? ' phase-current' : '';
-          
-          // Asignar un color sutil basado en la posición (cíclico, máximo 12 colores)
+
           const colorIdx = (idx % 12) + 1;
-          const colorClass = phase.status !== 'Finalizado' ? ` phase-color-${colorIdx}` : '';
-          
-          const safeLabel = (phase.label || '').toString().replace(/"/g, '&quot;');
+          const colorClass = phase.variantClass
+            ? ` ${phase.variantClass}`
+            : (phase.status !== 'Finalizado' ? ` phase-color-${colorIdx}` : '');
+
+          const safeLabel = (phase.displayLabel || phase.label || '').toString().replace(/"/g, '&quot;');
           const phaseDate = phase.date ? phase.date.toLocaleDateString('es-CO') : '';
-          
+          const badgeHtml = phase.variantBadge
+            ? `<div class="phase-special-badge ${phase.variantKey}">${phase.variantBadge}</div>`
+            : '';
+          const correctionsHtml = phase.corrections > 0
+            ? `<div class="phase-corrections">Correcciones: ${phase.corrections}</div>`
+            : '';
+
           return `
             <div class="timeline-phase ${phaseClass}${currentClass}${colorClass}" data-phase-idx="${idx}">
               <div class="timeline-phase-header">
@@ -332,12 +486,13 @@ export default class AdminPrecontractualPreview {
                   <div class="phase-dot" title="${safeLabel}"></div>
                   <div class="phase-line right ${idx === visiblePhases.length - 1 ? 'hidden' : ''}"></div>
                 </div>
-                <div class="phase-label">${phase.label}</div>
+                <div class="phase-label">${phase.displayLabel || phase.label}</div>
               </div>
               <div class="phase-info">
                 <div class="phase-date">${phaseDate}</div>
                 ${phase.status === 'Finalizado' ? `<div class="phase-status-badge phase-finalizado">Finalizado</div>` : ''}
-                ${phase.corrections > 0 ? `<div class="phase-corrections">Correcciones: ${phase.corrections}</div>` : ''}
+                ${badgeHtml}
+                ${correctionsHtml}
               </div>
             </div>
           `;
@@ -361,7 +516,7 @@ export default class AdminPrecontractualPreview {
               <h5 class="etapa-title">${item.etapa}${intentoLabel}</h5>
               <span class="status-badge ${statusClass}">${item.status}</span>
               ${item.intento > 1 ? `<span class="status-pill intento">Intento ${item.intento}</span>` : ''}
-              ${correctionsBadge}
+              ${specialBadgesHtml}
             </div>
             <div class="etapa-dates">
               <span class="start-date">${startDateStr}</span>
@@ -426,7 +581,16 @@ export default class AdminPrecontractualPreview {
       if (!detailsEl) return;
 
       const events = phase.events || [];
-  const correctionsCount = events.filter(evt => String(evt.Evento || '').trim() === 'Solicitud de Correccion').length;
+      const variantKey = phase.variantKey || null;
+      const variantBadge = phase.variantBadge || '';
+      const specialCounts = events.reduce((acc, evt) => {
+        const variant = getVariantForEvent(evt?.Evento);
+        if (variant) {
+          acc[variant.key] = (acc[variant.key] || 0) + 1;
+        }
+        return acc;
+      }, {});
+      const correctionsCount = specialCounts.correccion || 0;
       
       // Create header with etapa and phase info
       const headerHtml = `
@@ -434,11 +598,13 @@ export default class AdminPrecontractualPreview {
           <div class="phase-details-title">
             <div class="phase-details-etapa">${etapa}</div>
             <div class="phase-details-label">
-              <strong>${phase.label}</strong>
+              <strong>${phase.displayLabel || phase.label}</strong>
               ${phase.status === 'Finalizado' ? 
                 `<span class="phase-details-badge finalizado">Finalizado</span>` : 
                 ''}
-              ${correctionsCount > 0 ? `<span class="phase-details-badge correcciones">Correcciones: ${correctionsCount}</span>` : ''}
+              ${variantBadge ? `<span class="phase-details-badge special ${variantKey}">${variantBadge}</span>` : ''}
+              ${!variantBadge && phase.hasVariants ? `<span class="phase-details-badge info">Tiene solicitudes especiales</span>` : ''}
+              ${correctionsCount > 0 && !variantBadge ? `<span class="phase-details-badge correcciones">Correcciones: ${correctionsCount}</span>` : ''}
             </div>
           </div>
           <div class="phase-details-count">${events.length} evento${events.length !== 1 ? 's' : ''}</div>
@@ -467,10 +633,10 @@ export default class AdminPrecontractualPreview {
       const rows = sortedEvents.map(ev => {
         const fecha = ev.Fecha ? new Date(ev.Fecha).toLocaleString('es-CO') : '-';
         const descripcion = ev.Observaciones || '';
-        const isCorrection = String(ev.Evento || '').trim() === 'Solicitud de Correccion';
+        const variant = getVariantForEvent(ev?.Evento);
         const statusBadges = [
           (ev.Estado === 'Finalizado') ? '<div class="event-status finalizado">Finalizado</div>' : '',
-          isCorrection ? '<div class="event-status correccion">Corrección solicitada</div>' : ''
+          variant ? `<div class="event-status ${variant.key}">${variant.badge}</div>` : ''
         ].filter(Boolean).join('');
         
         return `

@@ -309,6 +309,9 @@ body {
 .legend-color.en-proceso { background: linear-gradient(90deg,#fbbf24,#f97316) }
 .legend-color.finalizado { background: linear-gradient(90deg,#34d399,#059669) }
 .legend-color.pendiente { background: linear-gradient(90deg,#93c5fd,#3b82f6) }
+.legend-color.evento-correccion { background: rgba(248,113,113,0.9) }
+.legend-color.evento-subsanacion { background: rgba(139,92,246,0.9) }
+.legend-color.evento-ajuste { background: rgba(14,165,233,0.9) }
 
 /* Phase details panel */
 .phase-details { padding: 0.75rem; background: white; border-radius: 8px; box-shadow: 0 8px 24px rgba(2,6,23,0.06); margin-top: 0.8rem; }
@@ -405,6 +408,18 @@ body {
 
 .legend-color.finalizado {
   background: var(--success-color);
+}
+
+.legend-color.evento-correccion {
+  background: #f97316;
+}
+
+.legend-color.evento-subsanacion {
+  background: #8b5cf6;
+}
+
+.legend-color.evento-ajuste {
+  background: #0ea5e9;
 }
 
 .timeline-chart {
@@ -552,6 +567,21 @@ body {
   color: #b91c1c;
 }
 
+.timeline-etapa-card .etapa-correcciones.correccion {
+  background: #fee2e2;
+  color: #b91c1c;
+}
+
+.timeline-etapa-card .etapa-correcciones.subsanacion {
+  background: rgba(139, 92, 246, 0.18);
+  color: #5b21b6;
+}
+
+.timeline-etapa-card .etapa-correcciones.ajuste {
+  background: rgba(14, 165, 233, 0.18);
+  color: #0369a1;
+}
+
 /* Phases Container */
 .timeline-phases-container {
   margin-top: 0.5rem;
@@ -658,6 +688,21 @@ body {
 .timeline-phase.phase-color-12 {
   background-color: var(--phase-color-12);
   border-left: 3px solid var(--phase-border-12);
+}
+
+.timeline-phase.phase-variant-correccion {
+  background-color: rgba(248, 113, 113, 0.16);
+  border-left: 3px solid #f87171;
+}
+
+.timeline-phase.phase-variant-subsanacion {
+  background-color: rgba(139, 92, 246, 0.16);
+  border-left: 3px solid #8b5cf6;
+}
+
+.timeline-phase.phase-variant-ajuste {
+  background-color: rgba(14, 165, 233, 0.16);
+  border-left: 3px solid #0ea5e9;
 }
 
 .timeline-phase.phase-current {
@@ -777,6 +822,32 @@ body {
 .phase-status-badge.phase-finalizado {
   background: var(--success-light);
   color: var(--success-color);
+}
+
+.phase-special-badge {
+  font-size: 0.7rem;
+  padding: 0.15rem 0.45rem;
+  border-radius: var(--radius-sm);
+  letter-spacing: 0.025em;
+  font-weight: 600;
+  text-transform: uppercase;
+  background: var(--neutral-100);
+  color: var(--neutral-700);
+}
+
+.phase-special-badge.correccion {
+  background: rgba(248, 113, 113, 0.2);
+  color: #b91c1c;
+}
+
+.phase-special-badge.subsanacion {
+  background: rgba(139, 92, 246, 0.2);
+  color: #5b21b6;
+}
+
+.phase-special-badge.ajuste {
+  background: rgba(14, 165, 233, 0.2);
+  color: #0369a1;
 }
 
 .timeline-stats {

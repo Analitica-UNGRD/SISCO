@@ -6,6 +6,51 @@
 import { Auth } from '../lib/auth.js';
 import { APP_CONFIG } from '../lib/config.js';
 
+const SPECIAL_EVENT_VARIANTS = [
+    {
+        key: 'correccion',
+        matchers: ['solicitud de correccion', 'solicitud de corrección', 'correccion solicitada'],
+        displayLabel: 'Corrección solicitada',
+        badge: 'Solicitud de corrección',
+        className: 'variant-correccion'
+    },
+    {
+        key: 'subsanacion',
+        matchers: ['solicitud de subsanacion', 'solicitud de subsanación', 'subsanacion solicitada'],
+        displayLabel: 'Subsanación solicitada',
+        badge: 'Solicitud de subsanación',
+        className: 'variant-subsanacion'
+    },
+    {
+        key: 'ajuste',
+        matchers: ['solicitud de ajuste', 'solicitud de ajustes', 'ajuste solicitado'],
+        displayLabel: 'Ajuste solicitado',
+        badge: 'Solicitud de ajuste',
+        className: 'variant-ajuste'
+    }
+];
+
+const SPECIAL_EVENT_LOOKUP = new Map();
+
+function normalizeEventName(name) {
+    return (name || '')
+        .toString()
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .trim()
+        .toLowerCase();
+}
+
+SPECIAL_EVENT_VARIANTS.forEach(variant => {
+    variant.matchers.forEach(alias => {
+        SPECIAL_EVENT_LOOKUP.set(normalizeEventName(alias), variant);
+    });
+});
+
+function getVariantForEvent(eventName) {
+    return SPECIAL_EVENT_LOOKUP.get(normalizeEventName(eventName)) || null;
+}
+
 class PrecontractualManager {
     constructor() {
         this.data = [];
@@ -292,39 +337,177 @@ class PrecontractualManager {
     }
     
     processEtapa(etapaData) {
-    const eventos = etapaData.eventos.sort((a, b) => new Date(a.Fecha) - new Date(b.Fecha));
-    const correcciones = eventos.filter(e => String(e.Evento || '').trim() === 'Solicitud de Correccion').length;
-        
-        // Encontrar todas las fechas de la etapa
-        const fechasEtapa = eventos.map(e => new Date(e.Fecha));
-        
-        // Encontrar fecha más temprana (inicio) y más tardía (fin) de toda la etapa
+        const eventosOrdenados = (etapaData.eventos || [])
+            .slice()
+            .sort((a, b) => new Date(a.Fecha) - new Date(b.Fecha));
+
+        const variantCounters = this.countVariantOccurrences(eventosOrdenados);
+        const phaseBlocks = this.buildPhaseBlocks(eventosOrdenados);
+
+        const fechasEtapa = eventosOrdenados.map(e => new Date(e.Fecha));
         const fechaInicio = fechasEtapa.length > 0 ? new Date(Math.min(...fechasEtapa)) : null;
-        const fechaFin = fechasEtapa.length > 0 ? new Date(Math.max(...fechasEtapa)) : null;
-        
-        // Calcular duración usando la fecha más temprana y más tardía
+        const fechaFinEtapa = fechasEtapa.length > 0 ? new Date(Math.max(...fechasEtapa)) : null;
+
         let duracionDias = 0;
-        if (fechaInicio && fechaFin) {
-            duracionDias = Math.ceil((fechaFin - fechaInicio) / (1000 * 60 * 60 * 24)) + 1; // +1 para incluir ambos días
+        if (fechaInicio && fechaFinEtapa) {
+            duracionDias = Math.ceil((fechaFinEtapa - fechaInicio) / (1000 * 60 * 60 * 24)) + 1;
         } else if (fechaInicio) {
-            // Si no hay fecha de fin, usar fecha actual para etapas en proceso
-            duracionDias = Math.ceil((new Date() - fechaInicio) / (1000 * 60 * 60 * 24));
+            duracionDias = Math.ceil((Date.now() - fechaInicio.getTime()) / (1000 * 60 * 60 * 24));
         }
-        
-        // Determinar estado basándose en si todas las fases están finalizadas
-        const eventosFin = eventos.filter(e => e.Estado === 'Finalizado');
-        const estado = eventosFin.length === eventos.length ? 'Finalizado' : 'En proceso';
-        
+
+        const eventosFinalizados = eventosOrdenados.filter(e => e.Estado === 'Finalizado');
+        const estado = eventosOrdenados.length > 0 && eventosFinalizados.length === eventosOrdenados.length
+            ? 'Finalizado'
+            : 'En proceso';
+
+        const maxIntento = eventosOrdenados.reduce((max, evt) => {
+            const intento = Number(evt.Intento) || 1;
+            return intento > max ? intento : max;
+        }, 1);
+
         return {
             etapa: etapaData.etapa,
-            estado: estado,
-            fechaInicio: fechaInicio,
-            fechaFin: estado === 'Finalizado' ? fechaFin : null,
-            duracionDias: duracionDias,
-            eventos: eventos,
-            intento: Math.max(...eventos.map(e => e.Intento || 1)),
-            correcciones
+            estado,
+            fechaInicio,
+            fechaFin: estado === 'Finalizado' ? fechaFinEtapa : null,
+            duracionDias,
+            eventos: eventosOrdenados,
+            intento: maxIntento,
+            correcciones: variantCounters.correccion || 0,
+            specialVariantCounters: variantCounters,
+            phaseBlocks
         };
+    }
+
+    countVariantOccurrences(events = []) {
+        return events.reduce((acc, evt) => {
+            const variant = getVariantForEvent(evt?.Evento);
+            if (variant) {
+                acc[variant.key] = (acc[variant.key] || 0) + 1;
+            }
+            return acc;
+        }, {});
+    }
+
+    determinePhaseStatus(events = [], fallback = 'En proceso') {
+        if (!events || events.length === 0) {
+            return fallback;
+        }
+
+        if (events.some(e => e.Estado === 'Finalizado')) {
+            return 'Finalizado';
+        }
+
+        if (events.some(e => e.Estado === 'En proceso')) {
+            return 'En proceso';
+        }
+
+        return fallback;
+    }
+
+    partitionPhaseEvents(phaseEvents = []) {
+        const baseEvents = [];
+        const variantBuckets = new Map();
+
+        phaseEvents.forEach(evt => {
+            const variant = getVariantForEvent(evt?.Evento);
+            if (variant) {
+                if (!variantBuckets.has(variant.key)) {
+                    variantBuckets.set(variant.key, []);
+                }
+                variantBuckets.get(variant.key).push(evt);
+            } else {
+                baseEvents.push(evt);
+            }
+        });
+
+        return { baseEvents, variantBuckets };
+    }
+
+    buildPhaseBlocks(events = []) {
+        const sortedEvents = Array.isArray(events)
+            ? events.slice().sort((a, b) => new Date(a.Fecha) - new Date(b.Fecha))
+            : [];
+
+        const phaseLabels = [];
+        const seen = new Set();
+
+        sortedEvents.forEach(evt => {
+            const label = evt && evt.Fase ? String(evt.Fase).trim() : '';
+            if (label && !seen.has(label)) {
+                seen.add(label);
+                phaseLabels.push(label);
+            }
+        });
+
+        const latestEvent = sortedEvents.length ? sortedEvents[sortedEvents.length - 1] : null;
+        const currentPhaseLabel = latestEvent && latestEvent.Fase ? String(latestEvent.Fase).trim() : null;
+        const latestVariant = latestEvent ? getVariantForEvent(latestEvent.Evento) : null;
+
+        const blocks = [];
+
+        phaseLabels.forEach((label, index) => {
+            const normalizedLabel = String(label || '').trim();
+            if (!normalizedLabel) {
+                return;
+            }
+
+            const phaseEvents = sortedEvents.filter(evt => String(evt.Fase || '').trim() === normalizedLabel);
+            const { baseEvents, variantBuckets } = this.partitionPhaseEvents(phaseEvents);
+            const baseLatest = baseEvents.length
+                ? baseEvents[baseEvents.length - 1]
+                : (phaseEvents.length ? phaseEvents[phaseEvents.length - 1] : null);
+            const baseDate = baseLatest ? new Date(baseLatest.Fecha) : null;
+            const baseStatus = this.determinePhaseStatus(baseEvents, phaseEvents.length ? 'En proceso' : 'Pendiente');
+
+            blocks.push({
+                baseLabel: normalizedLabel,
+                displayLabel: normalizedLabel,
+                status: baseStatus,
+                current: normalizedLabel === currentPhaseLabel && !latestVariant,
+                count: baseEvents.length,
+                events: baseEvents,
+                date: baseDate,
+                variantKey: null,
+                variantBadge: null,
+                variantClass: null,
+                hasVariants: variantBuckets.size > 0,
+                orderIndex: index * 10
+            });
+
+            variantBuckets.forEach((variantEvents, variantKey) => {
+                if (!variantEvents.length) {
+                    return;
+                }
+
+                const variantConfig = SPECIAL_EVENT_VARIANTS.find(v => v.key === variantKey);
+                if (!variantConfig) {
+                    return;
+                }
+
+                const variantLatest = variantEvents[variantEvents.length - 1];
+                const variantDate = variantLatest ? new Date(variantLatest.Fecha) : null;
+
+                blocks.push({
+                    baseLabel: normalizedLabel,
+                    displayLabel: `${normalizedLabel} · ${variantConfig.displayLabel}`,
+                    status: this.determinePhaseStatus(variantEvents, 'En proceso'),
+                    current: normalizedLabel === currentPhaseLabel && !!latestVariant && latestVariant.key === variantKey,
+                    count: variantEvents.length,
+                    events: variantEvents,
+                    date: variantDate,
+                    variantKey,
+                    variantBadge: variantConfig.badge,
+                    variantClass: variantConfig.className,
+                    hasVariants: false,
+                    orderIndex: index * 10 + 1
+                });
+            });
+        });
+
+        return blocks
+            .filter(block => block.count > 0 || block.variantKey || block.hasVariants)
+            .sort((a, b) => a.orderIndex - b.orderIndex || (a.variantKey ? 1 : -1));
     }
     
     updateFilters() {
@@ -447,11 +630,34 @@ class PrecontractualManager {
             return;
         }
         
-        let html = '';
+        const legendHtml = `
+            <div class="pre-timeline-legend">
+                <span class="legend-chip base"><span class="chip-dot"></span>En proceso</span>
+                <span class="legend-chip finalizado"><span class="chip-dot"></span>Finalizado</span>
+                <span class="legend-chip correccion"><span class="chip-dot"></span>Solicitud de corrección</span>
+                <span class="legend-chip subsanacion"><span class="chip-dot"></span>Solicitud de subsanación</span>
+                <span class="legend-chip ajuste"><span class="chip-dot"></span>Solicitud de ajuste</span>
+            </div>
+        `;
+        
+        let html = legendHtml;
         
         this.filteredData.forEach((candidato, index) => {
             const maxDuracion = Math.max(...candidato.etapas.map(e => e.duracionDias));
             const totalCorrecciones = candidato.etapas.reduce((sum, etapa) => sum + (etapa.correcciones || 0), 0);
+            const totalSubsanaciones = candidato.etapas.reduce((sum, etapa) => {
+                const counters = etapa.specialVariantCounters || {};
+                return sum + (counters.subsanacion || 0);
+            }, 0);
+            const totalAjustes = candidato.etapas.reduce((sum, etapa) => {
+                const counters = etapa.specialVariantCounters || {};
+                return sum + (counters.ajuste || 0);
+            }, 0);
+            const resumenEspeciales = [
+                `Correcciones: ${totalCorrecciones}`,
+                totalSubsanaciones > 0 ? `Subsanaciones: ${totalSubsanaciones}` : null,
+                totalAjustes > 0 ? `Ajustes: ${totalAjustes}` : null
+            ].filter(Boolean).join(' · ');
             
             html += `
                 <div class="candidate-timeline-item bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-4">
@@ -481,30 +687,46 @@ class PrecontractualManager {
                 const width = maxDuracion > 0 ? Math.max((etapa.duracionDias / maxDuracion) * 100, 15) : 15;
                 const fechaInicio = etapa.fechaInicio ? etapa.fechaInicio.toLocaleDateString('es-ES') : '-';
                 const fechaFin = etapa.fechaFin ? etapa.fechaFin.toLocaleDateString('es-ES') : 'En curso';
-                
+
                 const intentoBadge = etapa.intento > 1 ? `<span class="stage-intento">Intento ${etapa.intento}</span>` : '';
-                const correccionesCount = etapa.correcciones || 0;
-                const correccionesBadge = correccionesCount > 0 ? `<span class="stage-correcciones">Correcciones: ${correccionesCount}</span>` : '';
-                const stageMetaContent = [intentoBadge, correccionesBadge].filter(Boolean).join('');
+                const variantCounters = etapa.specialVariantCounters || {};
+                const correccionesCount = variantCounters.correccion || 0;
+                const subsanacionCount = variantCounters.subsanacion || 0;
+                const ajusteCount = variantCounters.ajuste || 0;
+                const correccionesBadge = correccionesCount > 0 ? `<span class="stage-correcciones correccion">Correcciones: ${correccionesCount}</span>` : '';
+                const subsanacionBadge = subsanacionCount > 0 ? `<span class="stage-correcciones subsanacion">Subsanaciones: ${subsanacionCount}</span>` : '';
+                const ajusteBadge = ajusteCount > 0 ? `<span class="stage-correcciones ajuste">Ajustes: ${ajusteCount}</span>` : '';
+                const stageMetaContent = [intentoBadge, correccionesBadge, subsanacionBadge, ajusteBadge].filter(Boolean).join('');
                 const stageMetaHtml = stageMetaContent ? `<div class="stage-label-meta">${stageMetaContent}</div>` : '';
 
+                const phaseBlocks = etapa.phaseBlocks || this.buildPhaseBlocks(etapa.eventos || []);
+                const phasePills = phaseBlocks.map(block => {
+                    const badge = block.variantBadge ? `<span class="phase-pill-badge ${block.variantKey || 'base'}">${block.variantBadge}</span>` : '';
+                    const pillClass = block.variantClass ? ` ${block.variantClass}` : '';
+                    return `<span class="phase-pill${pillClass}">${block.displayLabel}${badge}</span>`;
+                }).join('');
+                const phasePillsHtml = phasePills ? `<div class="stage-phase-pills">${phasePills}</div>` : '';
+
                 html += `
-                    <div class="stage-item">
-                        <div class="stage-label tooltip" data-tooltip="Etapa ${etapaIndex + 1} de ${candidato.etapas.length}">
-                            ${etapa.etapa}
-                        </div>
-                        ${stageMetaHtml}
-                        <div class="stage-bar-container">
-                            <div class="stage-bar-fill stage-${etapa.estado.toLowerCase().replace(' ', '-')}" 
-                                 style="width: ${width}%"
-                                 title="${etapa.duracionDias} días - ${fechaInicio} a ${fechaFin}">
-                                ${etapa.duracionDias}d
+                    <div class="stage-wrapper">
+                        <div class="stage-item">
+                            <div class="stage-label tooltip" data-tooltip="Etapa ${etapaIndex + 1} de ${candidato.etapas.length}">
+                                ${etapa.etapa}
+                            </div>
+                            ${stageMetaHtml}
+                            <div class="stage-bar-container">
+                                <div class="stage-bar-fill stage-${etapa.estado.toLowerCase().replace(' ', '-')}" 
+                                     style="width: ${width}%"
+                                     title="${etapa.duracionDias} días - ${fechaInicio} a ${fechaFin}">
+                                    ${etapa.duracionDias}d
+                                </div>
+                            </div>
+                            <div class="stage-duration">
+                                <div class="text-xs text-gray-500">${fechaInicio}</div>
+                                <div class="text-xs text-gray-600">${fechaFin}</div>
                             </div>
                         </div>
-                        <div class="stage-duration">
-                            <div class="text-xs text-gray-500">${fechaInicio}</div>
-                            <div class="text-xs text-gray-600">${fechaFin}</div>
-                        </div>
+                        ${phasePillsHtml}
                     </div>
                 `;
             });
@@ -515,7 +737,7 @@ class PrecontractualManager {
                     <div class="mt-4 pt-4 border-t border-gray-100 flex justify-between items-center text-sm text-gray-500">
                         <span>${candidato.etapas.length} etapa${candidato.etapas.length !== 1 ? 's' : ''}</span>
                         <span>Promedio: ${Math.round(candidato.tiempoTotal / candidato.etapas.length)} días por etapa</span>
-                        <span>Correcciones: ${totalCorrecciones}</span>
+                        <span>${resumenEspeciales}</span>
                     </div>
                 </div>
             `;
@@ -561,29 +783,32 @@ class PrecontractualManager {
                 const fechaInicio = etapa.fechaInicio ? etapa.fechaInicio.toLocaleDateString('es-CO') : 'N/A';
                 const fechaFin = etapa.fechaFin ? etapa.fechaFin.toLocaleDateString('es-CO') : 'En progreso';
                 
-                // Agrupar eventos por fase
-                const fasesPorNombre = new Map();
-                (etapa.eventos || []).forEach(evento => {
-                    const fase = evento.Fase || 'Sin clasificar';
-                    if (!fasesPorNombre.has(fase)) {
-                        fasesPorNombre.set(fase, []);
-                    }
-                    fasesPorNombre.get(fase).push(evento);
-                });
-                
-                const fasesHtml = Array.from(fasesPorNombre.entries()).map(([fase, eventos]) => {
-                    const ultimoEvento = eventos.sort((a, b) => new Date(b.Fecha) - new Date(a.Fecha))[0];
-                    const estadoFase = ultimoEvento ? ultimoEvento.Estado : 'Pendiente';
-                    const correccionesFase = eventos.filter(ev => String(ev.Evento || '').trim() === 'Solicitud de Correccion').length;
-                    const correccionesHtml = correccionesFase > 0 ? `<div class="fase-correcciones">Correcciones: ${correccionesFase}</div>` : '';
-                    
+                const phaseBlocks = etapa.phaseBlocks || this.buildPhaseBlocks(etapa.eventos || []);
+                const fasesHtml = phaseBlocks.map(block => {
+                    const estadoFase = block.status || 'Pendiente';
+                    const estadoClass = estadoFase.toLowerCase().replace(/\s+/g, '-');
+                    const eventosCount = block.events.length;
+                    const eventosLabel = `${eventosCount} evento${eventosCount !== 1 ? 's' : ''}`;
+                    const fechaReferencia = block.date ? block.date.toLocaleDateString('es-CO') : '';
+                    const badgePrincipal = block.variantBadge
+                        ? `<div class="fase-variant-badge ${block.variantKey}">${block.variantBadge} (${eventosCount})</div>`
+                        : '';
+                    const badgeInformativo = !block.variantBadge && block.hasVariants
+                        ? `<div class="fase-variant-badge info">Tiene solicitudes especiales</div>`
+                        : '';
+                    const correccionesHtml = block.variantKey === 'correccion' && eventosCount > 0
+                        ? `<div class="fase-correcciones">Correcciones: ${eventosCount}</div>`
+                        : '';
+                    const variantClass = block.variantClass ? ` ${block.variantClass}` : '';
+
                     return `
-                        <div class="fase-item" data-candidato="${candidato.persona_id}" data-etapa="${etapa.etapa}" data-fase="${fase}">
+                        <div class="fase-item${variantClass}" data-candidato="${candidato.persona_id}" data-etapa="${etapa.etapa}" data-fase="${block.baseLabel}" data-variant="${block.variantKey || 'base'}">
                             <div class="fase-header">
-                                <div class="fase-nombre">${fase}</div>
-                                <div class="fase-estado ${estadoFase.toLowerCase().replace(' ', '-')}">${estadoFase}</div>
+                                <div class="fase-nombre">${block.displayLabel}</div>
+                                <div class="fase-estado ${estadoClass}">${estadoFase}</div>
                             </div>
-                            <div class="fase-eventos-count">${eventos.length} evento${eventos.length !== 1 ? 's' : ''}</div>
+                            <div class="fase-eventos-count">${eventosLabel}${fechaReferencia ? ` · ${fechaReferencia}` : ''}</div>
+                            ${badgePrincipal || badgeInformativo || ''}
                             ${correccionesHtml}
                         </div>
                     `;
@@ -646,6 +871,16 @@ class PrecontractualManager {
                                     <span class="material-icons">edit_note</span>
                                     Correcciones: ${totalCorrecciones}
                                 </span>
+                                ${totalSubsanaciones > 0 ? `
+                                <span class="total-subsanaciones">
+                                    <span class="material-icons">assignment_late</span>
+                                    Subsanaciones: ${totalSubsanaciones}
+                                </span>` : ''}
+                                ${totalAjustes > 0 ? `
+                                <span class="total-ajustes">
+                                    <span class="material-icons">build</span>
+                                    Ajustes: ${totalAjustes}
+                                </span>` : ''}
                                 <span class="estado-general ${estadoColor}">
                                     <span class="material-icons">flag</span>
                                     ${estadoGeneral}
@@ -688,13 +923,14 @@ class PrecontractualManager {
                 const candidatoId = item.dataset.candidato;
                 const etapa = item.dataset.etapa;
                 const fase = item.dataset.fase;
+                const variant = item.dataset.variant || 'base';
                 
-                this.showFaseDetails(candidatoId, etapa, fase);
+                this.showFaseDetails(candidatoId, etapa, fase, variant);
             });
         });
     }
     
-    showFaseDetails(candidatoId, etapaNombre, faseNombre) {
+    showFaseDetails(candidatoId, etapaNombre, faseNombre, variantKey = 'base') {
         // Encontrar el candidato y la etapa
         const candidato = this.filteredData.find(c => c.persona_id === candidatoId);
         if (!candidato) return;
@@ -702,21 +938,57 @@ class PrecontractualManager {
         const etapa = candidato.etapas.find(e => e.etapa === etapaNombre);
         if (!etapa) return;
         
-        // Encontrar eventos de la fase
-        const eventosFase = (etapa.eventos || []).filter(evento => 
-            (evento.Fase || 'Sin clasificar') === faseNombre
+        const phaseBlocks = etapa.phaseBlocks || this.buildPhaseBlocks(etapa.eventos || []);
+        const block = phaseBlocks.find(b => 
+            b.baseLabel === faseNombre && (b.variantKey || 'base') === variantKey
         );
+        const eventosFase = block ? block.events : [];
         
+        const displayLabel = block ? block.displayLabel : faseNombre;
+        const variantBadgeHtml = block && block.variantBadge
+            ? `<span class="fase-modal-badge ${block.variantKey}">${block.variantBadge}</span>`
+            : '';
+        const infoBadgeHtml = block && !block.variantBadge && block.hasVariants
+            ? `<span class="fase-modal-badge info">Tiene solicitudes especiales</span>`
+            : '';
+        const eventosTotal = eventosFase.length;
+        const eventosMarkup = eventosFase.map(evento => {
+            const fecha = evento.Fecha ? new Date(evento.Fecha).toLocaleDateString('es-CO') : '-';
+            const estado = evento.Estado || 'En proceso';
+            const estadoClass = estado.toLowerCase().replace(/\s+/g, '-');
+            const variante = getVariantForEvent(evento.Evento);
+            const estadoExtra = variante ? `<div class="evento-estado-extra ${variante.key}">${variante.badge}</div>` : '';
+            return `
+                <div class="evento-detalle">
+                    <div class="evento-fecha">${fecha}</div>
+                    <div class="evento-estado ${estadoClass}">${estado}</div>
+                    ${estadoExtra}
+                    ${evento.Evento ? `<div class="evento-tipo">${evento.Evento}</div>` : ''}
+                    ${evento.Responsable ? `<div class="evento-responsable">Responsable: ${evento.Responsable}</div>` : ''}
+                    ${evento.Observaciones ? `<div class="evento-observaciones">${evento.Observaciones}</div>` : ''}
+                </div>
+            `;
+        }).join('');
+
         // Crear modal o panel de detalles
         const modal = document.createElement('div');
         modal.className = 'fase-modal';
         modal.innerHTML = `
             <div class="fase-modal-content">
                 <div class="fase-modal-header">
-                    <h3>${faseNombre}</h3>
-                    <button class="close-modal" onclick="this.closest('.fase-modal').remove()">
-                        <span class="material-icons">close</span>
-                    </button>
+                    <div class="fase-modal-header-left">
+                        <h3>${displayLabel}</h3>
+                        <div class="fase-modal-badges">
+                            ${variantBadgeHtml}
+                            ${infoBadgeHtml}
+                        </div>
+                    </div>
+                    <div class="fase-modal-header-right">
+                        <span class="fase-modal-count">${eventosTotal} evento${eventosTotal !== 1 ? 's' : ''}</span>
+                        <button class="close-modal" onclick="this.closest('.fase-modal').remove()">
+                            <span class="material-icons">close</span>
+                        </button>
+                    </div>
                 </div>
                 <div class="fase-modal-body">
                     <div class="candidato-etapa">
@@ -724,15 +996,7 @@ class PrecontractualManager {
                         <strong>Etapa:</strong> ${etapaNombre}
                     </div>
                     <div class="eventos-list">
-                        ${eventosFase.map(evento => `
-                            <div class="evento-detalle">
-                                <div class="evento-fecha">${new Date(evento.Fecha).toLocaleDateString('es-CO')}</div>
-                                <div class="evento-estado ${evento.Estado.toLowerCase().replace(' ', '-')}">${evento.Estado}</div>
-                                ${evento.Evento ? `<div class="evento-tipo">${evento.Evento}</div>` : ''}
-                                ${evento.Responsable ? `<div class="evento-responsable">Responsable: ${evento.Responsable}</div>` : ''}
-                                ${evento.Observaciones ? `<div class="evento-observaciones">${evento.Observaciones}</div>` : ''}
-                            </div>
-                        `).join('')}
+                        ${eventosMarkup}
                     </div>
                 </div>
             </div>
@@ -1004,6 +1268,27 @@ class PrecontractualManager {
                         Observaciones: `Evento ${faseIndex + 1} de la etapa ${etapa}`,
                         Evidencia_URL: ''
                     });
+
+                    if (!esUltimaFase && Math.random() < 0.2) {
+                        const variantes = ['Solicitud de Correccion', 'Solicitud de Subsanacion', 'Solicitud de Ajuste'];
+                        const varianteSeleccionada = variantes[Math.floor(Math.random() * variantes.length)];
+                        const varianteFecha = new Date(fechaEvento);
+                        varianteFecha.setDate(varianteFecha.getDate() + Math.floor(Math.random() * 3) + 1);
+
+                        eventos.push({
+                            pre_id: `PRE-${eventId++}`,
+                            persona_id: personaId,
+                            Etapa: etapa,
+                            Fase: fase,
+                            Estado: 'En proceso',
+                            Evento: varianteSeleccionada,
+                            Intento: 1,
+                            Fecha: varianteFecha.toISOString().split('T')[0],
+                            Responsable: 'admin@ungrd.gov.co',
+                            Observaciones: `${varianteSeleccionada} para la fase ${fase}`,
+                            Evidencia_URL: ''
+                        });
+                    }
                 });
             });
         });

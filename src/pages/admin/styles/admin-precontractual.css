@@ -72,6 +72,31 @@
   color: #b91c1c;
 }
 
+.phase-details-badge.special {
+  background-color: var(--neutral-100);
+  color: var(--neutral-700);
+}
+
+.phase-details-badge.special.correccion {
+  background-color: rgba(248, 113, 113, 0.2);
+  color: #b91c1c;
+}
+
+.phase-details-badge.special.subsanacion {
+  background-color: rgba(139, 92, 246, 0.2);
+  color: #5b21b6;
+}
+
+.phase-details-badge.special.ajuste {
+  background-color: rgba(14, 165, 233, 0.2);
+  color: #0369a1;
+}
+
+.phase-details-badge.info {
+  background-color: rgba(59, 130, 246, 0.12);
+  color: #1d4ed8;
+}
+
 .phase-details-count {
   font-size: 0.875rem;
   color: var(--neutral-500);
@@ -189,6 +214,16 @@
 .event-status.correccion {
   background-color: #fee2e2;
   color: #b91c1c;
+}
+
+.event-status.subsanacion {
+  background-color: rgba(139, 92, 246, 0.18);
+  color: #5b21b6;
+}
+
+.event-status.ajuste {
+  background-color: rgba(14, 165, 233, 0.18);
+  color: #0369a1;
 }
 
 /* Animation */

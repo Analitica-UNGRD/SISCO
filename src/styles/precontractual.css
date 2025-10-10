@@ -50,6 +50,52 @@
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 
+.pre-timeline-legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-bottom: 16px;
+}
+
+.legend-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px;
+    border-radius: 9999px;
+    font-size: 12px;
+    font-weight: 600;
+    background-color: #f3f4f6;
+    color: #374151;
+}
+
+.legend-chip .chip-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background-color: #9ca3af;
+}
+
+.legend-chip.base .chip-dot {
+    background: linear-gradient(90deg, #fbbf24, #f97316);
+}
+
+.legend-chip.finalizado .chip-dot {
+    background: linear-gradient(90deg, #10b981, #059669);
+}
+
+.legend-chip.correccion .chip-dot {
+    background: #f87171;
+}
+
+.legend-chip.subsanacion .chip-dot {
+    background: #8b5cf6;
+}
+
+.legend-chip.ajuste .chip-dot {
+    background: #0ea5e9;
+}
+
 /* Estilos para barras de progreso */
 .progress-bar {
     height: 8px;
@@ -148,6 +194,8 @@
 
 .total-tiempo,
 .total-correcciones,
+.total-subsanaciones,
+.total-ajustes,
 .estado-general {
     display: flex;
     align-items: center;
@@ -166,6 +214,16 @@
 .total-correcciones {
     background-color: #fee2e2;
     color: #b91c1c;
+}
+
+.total-subsanaciones {
+    background-color: rgba(139, 92, 246, 0.18);
+    color: #5b21b6;
+}
+
+.total-ajustes {
+    background-color: rgba(14, 165, 233, 0.18);
+    color: #0369a1;
 }
 
 .estado-general {
@@ -424,6 +482,21 @@
     background-color: white;
 }
 
+.fase-item.variant-correccion {
+    border-color: #fca5a5;
+    background-color: rgba(248, 113, 113, 0.12);
+}
+
+.fase-item.variant-subsanacion {
+    border-color: #c4b5fd;
+    background-color: rgba(139, 92, 246, 0.12);
+}
+
+.fase-item.variant-ajuste {
+    border-color: #7dd3fc;
+    background-color: rgba(14, 165, 233, 0.12);
+}
+
 .fase-correcciones {
     margin-top: 6px;
     font-size: 12px;
@@ -470,6 +543,38 @@
 .fase-estado.pendiente {
     background-color: #f3f4f6;
     color: #6b7280;
+}
+
+.fase-variant-badge {
+    margin-top: 8px;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 8px;
+    border-radius: 9999px;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+.fase-variant-badge.correccion {
+    background-color: rgba(248, 113, 113, 0.2);
+    color: #b91c1c;
+}
+
+.fase-variant-badge.subsanacion {
+    background-color: rgba(139, 92, 246, 0.2);
+    color: #5b21b6;
+}
+
+.fase-variant-badge.ajuste {
+    background-color: rgba(14, 165, 233, 0.2);
+    color: #0369a1;
+}
+
+.fase-variant-badge.info {
+    background-color: rgba(59, 130, 246, 0.12);
+    color: #1d4ed8;
 }
 
 .fase-eventos-count {
@@ -541,6 +646,64 @@
     color: #1f2937;
 }
 
+.fase-modal-header-left {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.fase-modal-header-right {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.fase-modal-badges {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+.fase-modal-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 8px;
+    border-radius: 9999px;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+.fase-modal-badge.correccion {
+    background-color: rgba(248, 113, 113, 0.2);
+    color: #b91c1c;
+}
+
+.fase-modal-badge.subsanacion {
+    background-color: rgba(139, 92, 246, 0.2);
+    color: #5b21b6;
+}
+
+.fase-modal-badge.ajuste {
+    background-color: rgba(14, 165, 233, 0.2);
+    color: #0369a1;
+}
+
+.fase-modal-badge.info {
+    background-color: rgba(59, 130, 246, 0.12);
+    color: #1d4ed8;
+}
+
+.fase-modal-count {
+    font-size: 12px;
+    font-weight: 600;
+    color: #4b5563;
+    background-color: #e5e7eb;
+    padding: 4px 10px;
+    border-radius: 9999px;
+}
+
 .close-modal {
     background: none;
     border: none;
@@ -597,6 +760,31 @@
     margin-left: 8px;
 }
 
+.evento-estado-extra {
+    display: inline-flex;
+    margin-top: 6px;
+    padding: 2px 8px;
+    border-radius: 9999px;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+.evento-estado-extra.correccion {
+    background-color: rgba(248, 113, 113, 0.2);
+    color: #b91c1c;
+}
+
+.evento-estado-extra.subsanacion {
+    background-color: rgba(139, 92, 246, 0.2);
+    color: #5b21b6;
+}
+
+.evento-estado-extra.ajuste {
+    background-color: rgba(14, 165, 233, 0.2);
+    color: #0369a1;
+}
+
 .evento-tipo,
 .evento-responsable,
 .evento-observaciones {
@@ -632,6 +820,14 @@
         flex-direction: column;
         align-items: flex-start;
         gap: 8px;
+    }
+
+    .stage-wrapper {
+        gap: 4px;
+    }
+
+    .stage-phase-pills {
+        margin-left: 0;
     }
     
     .fase-modal-content {
@@ -842,6 +1038,16 @@
     color: #b91c1c;
 }
 
+.stage-label-meta .stage-correcciones.subsanacion {
+    background-color: rgba(139, 92, 246, 0.16);
+    color: #5b21b6;
+}
+
+.stage-label-meta .stage-correcciones.ajuste {
+    background-color: rgba(14, 165, 233, 0.16);
+    color: #0369a1;
+}
+
 .stage-bar-container {
     flex: 1;
     height: 24px;
@@ -870,6 +1076,57 @@
     font-size: 14px;
     color: #374151;
     font-weight: 500;
+}
+
+.stage-wrapper {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.stage-phase-pills {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-left: calc(120px + 12px);
+}
+
+.phase-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 10px;
+    border-radius: 9999px;
+    font-size: 12px;
+    font-weight: 500;
+    background-color: #f3f4f6;
+    color: #374151;
+    border: 1px solid #e5e7eb;
+}
+
+.phase-pill-badge {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    font-weight: 600;
+}
+
+.phase-pill.variant-correccion {
+    background-color: rgba(248, 113, 113, 0.16);
+    border-color: #fca5a5;
+    color: #b91c1c;
+}
+
+.phase-pill.variant-subsanacion {
+    background-color: rgba(139, 92, 246, 0.16);
+    border-color: #c4b5fd;
+    color: #5b21b6;
+}
+
+.phase-pill.variant-ajuste {
+    background-color: rgba(14, 165, 233, 0.16);
+    border-color: #7dd3fc;
+    color: #0369a1;
 }
 
 /* Estilos para indicadores de progreso */
