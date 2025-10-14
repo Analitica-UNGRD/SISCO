@@ -45,12 +45,15 @@ function handleCrearPagoBorrador(payload) {
 		var numeroCobro = nextNumeroCobro(contratoId);
 		var pagoId = 'PG-' + uuidShort();
 		var email = Session.getActiveUser().getEmail();
+		var personaIdFinal = String(payload.persona_id || personaId || '').trim();
+		var identificacion = resolvePersonaIdentificacion(personaIdFinal, payload) || '';
 		
 		// Use centralized append helper (which acquires a lock) to safely append this row
 		var rowObj = {};
 		rowObj['pago_id'] = pagoId;
 		rowObj['contrato_id'] = contratoId;
-		rowObj['persona_id'] = String(payload.persona_id || personaId || '');
+		rowObj['persona_id'] = personaIdFinal;
+		rowObj['Identificacion'] = identificacion;
 		rowObj['Numero_cobro'] = numeroCobro;
 		rowObj['Fecha_inicio'] = fIni;
 		rowObj['Fecha_fin'] = fFin;
@@ -181,9 +184,16 @@ function upsertPago(payload) {
 		if (!contratoId) return { ok: false, error: 'contrato_id is required' };
 		var sh = getSheet(CONFIG.SHEETS.PAGOS);
 		var email = Session.getActiveUser().getEmail();
+		var personaId = String(payload.persona_id || '').trim();
+		if (!personaId && contratoId) {
+			var contratoRow = findContratoById(contratoId);
+			if (contratoRow) personaId = String(contratoRow.persona_id || '').trim();
+		}
+		var identificacion = resolvePersonaIdentificacion(personaId, payload) || '';
 		if (pagoId) {
 			var updates = {
-				'persona_id': payload.persona_id || '',
+				'persona_id': personaId || '',
+				'Identificacion': identificacion,
 				'Fecha_inicio': payload.Fecha_inicio ? parseDateISO(payload.Fecha_inicio) : '',
 				'Fecha_fin': payload.Fecha_fin ? parseDateISO(payload.Fecha_fin) : '',
 				'Valor_pago': payload.Valor_pago || payload.ValorPago || payload.Valor_pago || '',
@@ -202,7 +212,8 @@ function upsertPago(payload) {
 		var rowObj = {};
 		rowObj['pago_id'] = newId;
 		rowObj['contrato_id'] = contratoId;
-		rowObj['persona_id'] = payload.persona_id || '';
+		rowObj['persona_id'] = personaId || '';
+		rowObj['Identificacion'] = identificacion;
 		rowObj['Numero_cobro'] = numeroCobro;
 		rowObj['Fecha_inicio'] = payload.Fecha_inicio ? parseDateISO(payload.Fecha_inicio) : '';
 		rowObj['Fecha_fin'] = payload.Fecha_fin ? parseDateISO(payload.Fecha_fin) : '';

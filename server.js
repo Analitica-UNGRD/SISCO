@@ -21,7 +21,7 @@ const PORT = process.env.PORT || 3000; // default dev port for proxy
 // Comma-separated allowed origins (set ALLOWED_ORIGINS env var if needed)
 // Default has common dev origins for local testing. Update TARGET_URL to
 // point to your Apps Script deployment if it changes.
-const TARGET_URL = process.env.TARGET_URL || 'https://script.google.com/macros/s/AKfycbxDwFfPA3Ull4bEHbabzgxOvO1iQEuvM3fy_XbRJcwUnEBUuJee5JBHqPPeXo7v1xYwKg/exec';
+const TARGET_URL = process.env.TARGET_URL || 'https://script.google.com/macros/s/AKfycbyEiBxKDtKPE65jesVvyVRsh39z_B9azF924pYWJQ_qDlmI48KgmLGM3BPCRuC90VvCRA/exec';
 const ALLOWED_ORIGINS = (process.env.ALLOWED_ORIGINS || 'http://localhost:5500,http://127.0.0.1:5500,http://localhost:5501,http://127.0.0.1:5501,http://192.168.1.11:5500,http://localhost:3000').split(',').map(s=>s.trim()).filter(Boolean);
 
 // Basic request size limit and parsers

@@ -17,9 +17,11 @@ function handleCrearContrato(payload) {
 		if (!isDraft && (!personaId || !numero)) return { ok: false, error: 'persona_id y Numero_contrato son requeridos.' };
 		var contratoId = 'C-' + uuidShort();
 		var email = Session.getActiveUser().getEmail();
+		var identificacion = resolvePersonaIdentificacion(personaId, payload) || '';
 		var rowObj = {};
 		rowObj['contrato_id'] = contratoId;
 		rowObj['persona_id'] = personaId;
+		rowObj['Identificacion'] = identificacion;
 		rowObj['Numero_contrato'] = numero;
 		rowObj['Objeto'] = objeto;
 		rowObj['Inicio'] = inicio;
@@ -50,9 +52,11 @@ function upsertContrato(payload) {
 		var numero = String(payload.Numero_contrato || payload.Numero || '').trim();
 		if (!contratoId && (!personaId || !numero)) return { ok: false, error: 'persona_id and Numero_contrato are required to create a contract' };
 		var email = Session.getActiveUser().getEmail();
+		var identificacion = resolvePersonaIdentificacion(personaId, payload) || '';
 		if (contratoId) {
 			var updates = {
 				'persona_id': personaId || '',
+				'Identificacion': identificacion,
 				'Numero_contrato': numero || '',
 				'Objeto': payload.Objeto || payload.Objeto_contrato || '',
 				'Inicio': payload.Inicio || payload.inicio || '',
@@ -80,6 +84,7 @@ function upsertContrato(payload) {
 		var rowObj = {};
 		rowObj['contrato_id'] = newId;
 		rowObj['persona_id'] = personaId;
+		rowObj['Identificacion'] = identificacion;
 		rowObj['Numero_contrato'] = numero;
 		rowObj['Objeto'] = payload.Objeto || payload.Objeto_contrato || '';
 		rowObj['Inicio'] = payload.Inicio || payload.inicio || '';
@@ -190,8 +195,11 @@ function editarContrato(payload) {
 		if (!contratoId) return { ok: false, error: 'contrato_id es requerido para editar' };
 		
 		var email = Session.getActiveUser().getEmail();
+		var personaId = String(payload.persona_id || '').trim();
+		var identificacion = resolvePersonaIdentificacion(personaId, payload) || '';
 		var updates = {
-			'persona_id': payload.persona_id || '',
+			'persona_id': personaId || '',
+			'Identificacion': identificacion,
 			'Numero_contrato': payload.Numero_contrato || payload.Numero || '',
 			'Objeto': payload.Objeto || payload.Objeto_contrato || '',
 			'Inicio': payload.Inicio || payload.inicio || '',
@@ -233,9 +241,11 @@ function guardarNuevoContrato(payload) {
 		// Crear nuevo contrato
 		var contratoId = 'C-' + uuidShort();
 		var email = Session.getActiveUser().getEmail();
+		var identificacion = resolvePersonaIdentificacion(personaId, payload) || '';
 		var rowObj = {};
 		rowObj['contrato_id'] = contratoId;
 		rowObj['persona_id'] = personaId;
+		rowObj['Identificacion'] = identificacion;
 		rowObj['Numero_contrato'] = numero;
 		rowObj['Objeto'] = payload.Objeto || payload.Objeto_contrato || '';
 		rowObj['Inicio'] = payload.Inicio || payload.inicio || '';

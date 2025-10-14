@@ -84,9 +84,11 @@ function handleCrearPrecontractual(payload) {
 		
 		var preId = 'PRE-' + uuidShort();
 		var email = Session.getActiveUser().getEmail();
+		var identificacion = resolvePersonaIdentificacion(personaId, payload) || '';
 		var rowObj = {};
 		rowObj['pre_id'] = preId;
 		rowObj['persona_id'] = personaId;
+		rowObj['Identificacion'] = identificacion;
 		rowObj['Etapa'] = etapa;
 		rowObj['Fase'] = fase;
 		rowObj['Estado'] = payload.Estado || 'En proceso';
@@ -130,10 +132,12 @@ function upsertPrecontractual(payload) {
 		}
 		
 		var email = Session.getActiveUser().getEmail();
+		var identificacion = resolvePersonaIdentificacion(personaId, payload) || '';
 		
 		if (preId) {
 			var updates = {
 				'persona_id': personaId || '',
+				'Identificacion': identificacion,
 				'Etapa': etapa || '',
 				'Fase': fase || '',
 				'Estado': payload.Estado || '',
@@ -167,6 +171,7 @@ function upsertPrecontractual(payload) {
 		var rowObj = {};
 		rowObj['pre_id'] = newId;
 		rowObj['persona_id'] = personaId;
+		rowObj['Identificacion'] = identificacion;
 		rowObj['Etapa'] = etapa;
 		rowObj['Fase'] = fase;
 		rowObj['Estado'] = payload.Estado || 'En proceso';

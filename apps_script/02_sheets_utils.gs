@@ -161,3 +161,74 @@ function formatEstadoForWrite(raw) {
   if (n === 'aprobada' || n === 'aprobado') return 'Aprobada';
   return String(raw);
 }
+
+// Simple in-memory caches to avoid repeated sheet scans within a single execution
+var _CACHE_MAX_AGE_MS = 60 * 1000;
+var _PERSONAS_BY_ID_CACHE = null;
+var _PERSONAS_CACHE_TS = 0;
+var _CONTRATOS_BY_ID_CACHE = null;
+var _CONTRATOS_CACHE_TS = 0;
+
+function _cacheExpired(ts) {
+  return !ts || (new Date().getTime() - ts) > _CACHE_MAX_AGE_MS;
+}
+
+function _refreshPersonasCache(force) {
+  if (!force && _PERSONAS_BY_ID_CACHE && !_cacheExpired(_PERSONAS_CACHE_TS)) return;
+  var sh = getSheet(CONFIG.SHEETS.PERSONAS);
+  var rows = sheetToObjects(sh);
+  var map = {};
+  for (var i = 0; i < rows.length; i++) {
+    var row = rows[i] || {};
+    var pid = String(row.persona_id || row.personaId || row.id || '').trim();
+    if (pid) map[pid] = row;
+  }
+  _PERSONAS_BY_ID_CACHE = map;
+  _PERSONAS_CACHE_TS = new Date().getTime();
+}
+
+function findPersonaById(personaId, options) {
+  if (!personaId) return null;
+  _refreshPersonasCache(options && options.force);
+  var pid = String(personaId || '').trim();
+  return _PERSONAS_BY_ID_CACHE && _PERSONAS_BY_ID_CACHE[pid] ? _PERSONAS_BY_ID_CACHE[pid] : null;
+}
+
+function _refreshContratosCache(force) {
+  if (!force && _CONTRATOS_BY_ID_CACHE && !_cacheExpired(_CONTRATOS_CACHE_TS)) return;
+  var sh = getSheet(CONFIG.SHEETS.CONTRATOS);
+  var rows = sheetToObjects(sh);
+  var map = {};
+  for (var i = 0; i < rows.length; i++) {
+    var row = rows[i] || {};
+    var cid = String(row.contrato_id || row.id || '').trim();
+    if (cid) map[cid] = row;
+  }
+  _CONTRATOS_BY_ID_CACHE = map;
+  _CONTRATOS_CACHE_TS = new Date().getTime();
+}
+
+function findContratoById(contratoId, options) {
+  if (!contratoId) return null;
+  _refreshContratosCache(options && options.force);
+  var cid = String(contratoId || '').trim();
+  return _CONTRATOS_BY_ID_CACHE && _CONTRATOS_BY_ID_CACHE[cid] ? _CONTRATOS_BY_ID_CACHE[cid] : null;
+}
+
+function resolvePersonaIdentificacion(personaId, payload) {
+  try {
+    var fromPayload = payload && (payload.Identificacion || payload.identificacion || payload.documento_identidad || payload.Documento || payload.documento || payload.documento_identidad);
+    if (fromPayload) {
+      var cleaned = String(fromPayload).trim();
+      if (cleaned) return cleaned;
+    }
+    if (!personaId) return '';
+    var persona = findPersonaById(personaId);
+    if (!persona) return '';
+    var fromPersona = persona.Identificacion || persona['Identificación'] || persona.documento_identidad || persona.Documento || persona.documento || '';
+    return fromPersona ? String(fromPersona).trim() : '';
+  } catch (err) {
+    try { Logger.log('resolvePersonaIdentificacion error: %s', String(err)); } catch (e) {}
+    return '';
+  }
+}

@@ -7,19 +7,16 @@ function handleCrearObligacion(payload) {
 		if (!isDraft && (!contratoId || !descripcion)) return { ok: false, error: 'contrato_id y Descripcion son requeridos.' };
 		var obligId = 'O-' + uuidShort();
 		var email = Session.getActiveUser().getEmail();
+		var personaId = String(payload.persona_id || '').trim();
+		if (!personaId && contratoId) {
+			var contratoInfo = findContratoById(contratoId);
+			if (contratoInfo) personaId = String(contratoInfo.persona_id || contratoInfo.personaId || '').trim();
+		}
+		var identificacion = resolvePersonaIdentificacion(personaId, payload) || '';
 		var rowObj = {};
-		var personaForContrato = '';
-		try{
-			if (contratoId) {
-				var shC = getSheet(CONFIG.SHEETS.CONTRATOS);
-				var contratosList = sheetToObjects(shC);
-				for(var ci=0; ci<contratosList.length; ci++){
-					if(String(contratosList[ci]['contrato_id']||'') === contratoId){ personaForContrato = String(contratosList[ci].persona_id||contratosList[ci]['persona_id']||''); break; }
-				}
-			}
-		}catch(e){}
 		rowObj['obligacion_id'] = obligId;
-		rowObj['persona_id'] = payload.persona_id || personaForContrato || '';
+		rowObj['persona_id'] = personaId || '';
+		rowObj['Identificacion'] = identificacion;
 		rowObj['contrato_id'] = contratoId;
 		rowObj['Descripcion'] = descripcion;
 		rowObj['Actividades_realizadas'] = payload.Actividades_realizadas || '';
@@ -41,9 +38,16 @@ function upsertObligacion(payload) {
 		var descripcion = String(payload.Descripcion || payload.descripcion || '').trim();
 		if (!obligId && (!contratoId || !descripcion)) return { ok: false, error: 'contrato_id and Descripcion are required' };
 		var email = Session.getActiveUser().getEmail();
+		var personaId = String(payload.persona_id || '').trim();
+		if (!personaId && contratoId) {
+			var contratoInfo = findContratoById(contratoId);
+			if (contratoInfo) personaId = String(contratoInfo.persona_id || contratoInfo.personaId || '').trim();
+		}
+		var identificacion = resolvePersonaIdentificacion(personaId, payload) || '';
 		if (obligId) {
 			var updates = {
-				'persona_id': payload.persona_id || '',
+				'persona_id': personaId || '',
+				'Identificacion': identificacion,
 				'contrato_id': contratoId || '',
 				'Descripcion': descripcion || '',
 				'Actividades_realizadas': payload.Actividades_realizadas || '',
@@ -61,7 +65,8 @@ function upsertObligacion(payload) {
 		var newId = 'O-' + uuidShort();
 		var rowObj = {};
 		rowObj['obligacion_id'] = newId;
-		rowObj['persona_id'] = payload.persona_id || '';
+		rowObj['persona_id'] = personaId || '';
+		rowObj['Identificacion'] = identificacion;
 		rowObj['contrato_id'] = contratoId;
 		rowObj['Descripcion'] = descripcion;
 		rowObj['Actividades_realizadas'] = payload.Actividades_realizadas || '';
