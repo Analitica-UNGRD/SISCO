@@ -234,18 +234,32 @@ export default class AdminContractualObligaciones {
     const contrato = this.adminManager?.ctx?.contrato;
     if (!contrato) {
       this.showMessage('Selecciona un contrato antes de guardar.', 'warning');
-      return [];
+      return null;
     }
 
     const contratoId = contrato.contrato_id || contrato.id;
     const personaId = this.adminManager?.ctx?.persona ? (this.adminManager.ctx.persona.persona_id || this.adminManager.ctx.persona.id) : '';
 
+    const activeFields = (this.fields && this.fields.length)
+      ? this.fields
+      : Array.from(this.container?.querySelectorAll('textarea') || []).map(textarea => ({
+          textarea,
+          wrapper: textarea.closest('[data-index]')
+        }));
+
     const payloads = [];
-    this.fields.forEach(meta => {
-      const value = (meta.textarea.value || '').trim();
-      const obligacionId = meta.wrapper.dataset.obligacionId || '';
+    let totalFilled = 0;
+
+    activeFields.forEach(meta => {
+      const textarea = meta?.textarea;
+      if (!textarea) return;
+      const value = (textarea.value || '').trim();
+      const wrapper = meta.wrapper || textarea.closest('[data-index]');
+      const obligacionId = wrapper?.dataset?.obligacionId || '';
+
       if (!value) return;
 
+      totalFilled += 1;
       payloads.push({
         obligacion_id: obligacionId,
         contrato_id: contratoId,
@@ -254,14 +268,20 @@ export default class AdminContractualObligaciones {
       });
     });
 
-    return payloads;
+    return { payloads, totalFilled };
   }
 
   async saveObligaciones() {
     if (this.isSaving) return;
 
-    const payloads = this.collectPayloads();
-    if (!payloads.length) {
+    const payloadResult = this.collectPayloads();
+    if (!payloadResult) {
+      return;
+    }
+
+    const { payloads, totalFilled } = payloadResult;
+
+    if (totalFilled === 0) {
       this.showMessage('Ingresa al menos una obligación para guardar.', 'warning');
       return;
     }
