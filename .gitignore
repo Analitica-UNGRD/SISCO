@@ -1,0 +1,17 @@
+﻿# Project
+node_modules/
+.vscode/
+.DS_Store
+Thumbs.db
+
+# Env / Secrets
+.env
+.env.*
+!.env.example
+
+# Builds
+/dist/
+/build/
+/.next/
+/out/
+

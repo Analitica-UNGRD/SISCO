@@ -21,13 +21,16 @@ const PORT = process.env.PORT || 3000; // default dev port for proxy
 // Comma-separated allowed origins (set ALLOWED_ORIGINS env var if needed)
 // Default has common dev origins for local testing. Update TARGET_URL to
 // point to your Apps Script deployment if it changes.
-const TARGET_URL = process.env.TARGET_URL || 'https://script.google.com/macros/s/AKfycbxDwFfPA3Ull4bEHbabzgxOvO1iQEuvM3fy_XbRJcwUnEBUuJee5JBHqPPeXo7v1xYwKg/exec';
+const TARGET_URL = process.env.TARGET_URL; // required in env
+const API_TOKEN = process.env.API_TOKEN;   // shared secret with Apps Script
 const ALLOWED_ORIGINS = (process.env.ALLOWED_ORIGINS || 'http://localhost:5500,http://127.0.0.1:5500,http://localhost:5501,http://127.0.0.1:5501,http://192.168.1.11:5500,http://localhost:3000').split(',').map(s=>s.trim()).filter(Boolean);
 
 // Basic request size limit and parsers
 // Use text body parser to accept 'text/plain' and generic payloads sent by the
 // frontend. Limit the size to avoid memory issues; set BODY_LIMIT env var if
 // you need larger payloads during development.
+// Accept JSON (preferred) and text (fallback). We'll normalize to JSON.
+app.use(bodyParser.json({ limit: process.env.BODY_LIMIT || '128kb' }));
 app.use(bodyParser.text({ type: '*/*', limit: process.env.BODY_LIMIT || '128kb' }));
 
 // Serve static files
@@ -45,7 +48,7 @@ app.use(function(req, res, next){
     res.setHeader('Access-Control-Allow-Origin', ALLOWED_ORIGINS[0]);
   }
   res.setHeader('Access-Control-Allow-Methods', 'GET,POST,OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With');
   res.setHeader('Access-Control-Allow-Credentials', 'false');
   if (req.method === 'OPTIONS') return res.sendStatus(200);
   next();
@@ -91,7 +94,7 @@ function setCorsHeaders(req, res){
     res.set('Access-Control-Allow-Origin', origin);
   }
   res.set('Access-Control-Allow-Methods', 'GET,POST,OPTIONS');
-  res.set('Access-Control-Allow-Headers', 'Content-Type');
+  res.set('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With');
 }
 
 // Options handler for CORS preflight
@@ -105,6 +108,22 @@ app.options('/api', (req, res) => {
 // Proxy endpoint: accepts a text/plain body (or any text payload) and forwards
 // it to the configured TARGET_URL. Mirrors the response including Content-Type.
 app.post('/api', async (req, res) => {
+  // Ensure configuration is present
+  if (!TARGET_URL || !API_TOKEN) {
+    setCorsHeaders(req, res);
+    return res.status(500).json({ ok: false, error: 'Missing TARGET_URL or API_TOKEN' });
+  }
+
+  // Placeholder session enforcement for local dev
+  const hasSession = Boolean((process.env.DISABLE_SESSION_CHECK === '1') || (req.headers && (
+    (req.headers.cookie && req.headers.cookie.includes('session=')) ||
+    (req.headers.authorization && req.headers.authorization.trim()) ||
+    (req.headers['x-session'] && req.headers['x-session'].trim())
+  )));
+  if (!hasSession) {
+    setCorsHeaders(req, res);
+    return res.status(401).json({ ok: false, error: 'Unauthorized' });
+  }
   const ip = req.ip || req.connection.remoteAddress || 'unknown';
   if (isRateLimited(ip)) {
     console.warn(`Rate limit hit for ${ip}`);
@@ -113,21 +132,35 @@ app.post('/api', async (req, res) => {
   }
 
   try {
-    const body = req.body && req.body.length ? req.body : '{}';
+    // Normalize incoming to JSON
+    let incoming = {};
+    if (req.is('application/json') && req.body && typeof req.body === 'object') {
+      incoming = req.body;
+    } else if (typeof req.body === 'string') {
+      try { incoming = JSON.parse(req.body || '{}'); } catch (_) { incoming = {}; }
+    } else { incoming = {}; }
+
+    const outbound = Object.assign({}, incoming, { token: API_TOKEN });
+
     console.log(`Proxying request from ${ip} to ${TARGET_URL}`);
     const r = await fetch(TARGET_URL, {
       method: 'POST',
-      headers: { 'Content-Type': 'text/plain' },
-      body: body
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(outbound)
     });
 
-    const contentType = r.headers.get('content-type') || 'application/json';
-    const text = await r.text();
+    let data, rawText;
+    try { rawText = await r.text(); data = rawText ? JSON.parse(rawText) : {}; } catch (_) { data = null; }
 
     setCorsHeaders(req, res);
-    res.status(r.status);
-    res.set('Content-Type', contentType);
-    return res.send(text);
+    if (data && data.ok === false) {
+      const err = String(data.error || '').toLowerCase();
+      const hinted = Number(data.status || 0);
+      const status = hinted || (err.includes('forbidden') ? 403 : err.includes('unknown path') ? 400 : 502);
+      return res.status(status).json(data);
+    }
+
+    return res.status(r.status).type('application/json').send(data ? JSON.stringify(data) : (rawText || '{}'));
   } catch (err) {
     console.error('proxy error', err);
     setCorsHeaders(req, res);

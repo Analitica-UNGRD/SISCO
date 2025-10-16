@@ -12,23 +12,44 @@ function doGet(e) {
 
 function doPost(e) {
   try {
+    // Read script properties (holds API_TOKEN and optionally other config)
+    var props = PropertiesService.getScriptProperties();
+    var API_TOKEN = props.getProperty('API_TOKEN');
+
+    // Parse incoming body safely
     var body = {};
-    if (e && e.postData && e.postData.contents) {
-      try { body = JSON.parse(e.postData.contents); } catch (_) { body = {}; }
+    if (e && e.postData && typeof e.postData.contents === 'string') {
+      try { body = JSON.parse(e.postData.contents || '{}'); } catch (_) { body = {}; }
     }
+
+    // Technical authentication: proxy ↔ Apps Script shared token
+    var providedToken = body && body.token;
+    if (!API_TOKEN || !providedToken || providedToken !== API_TOKEN) {
+      return buildJsonOutput({ ok: false, error: 'Forbidden', status: 403 });
+    }
+
     var path = body && body.path;
     var payload = body && body.payload;
+
+    // Basic payload size guard (~64KB when stringified)
+    try {
+      var size = JSON.stringify(payload || {}).length;
+      if (size > 64 * 1024) {
+        return buildJsonOutput({ ok: false, error: 'Payload too large', status: 413 });
+      }
+    } catch (_s) {}
 
     if (!path) return buildJsonOutput({ ok: false, error: 'Missing "path"' });
 
     if (API_HANDLERS && API_HANDLERS[path]) {
       try {
+        // Preserve existing contract: handlers may return { ok, data } or raw data
         return buildJsonOutput(API_HANDLERS[path](payload || {}));
       } catch (hErr) {
         return buildJsonOutput({ ok: false, error: String(hErr) });
       }
     }
-    return buildJsonOutput({ ok: false, error: 'Unknown path: ' + path });
+    return buildJsonOutput({ ok: false, error: 'Unknown path: ' + path, status: 400 });
   } catch (err) {
     return buildJsonOutput({ ok: false, error: String(err) });
   }
