@@ -17,7 +17,7 @@
 const _fromWindow = (typeof window !== 'undefined' && window.APP_CONFIG_OVERRIDE && window.APP_CONFIG_OVERRIDE.BASE_URL) ? window.APP_CONFIG_OVERRIDE.BASE_URL : '';
 
 /** URL del Apps Script en producción */
-const APPS_SCRIPT_EXEC = 'https://script.google.com/macros/s/AKfycbwtKk-C0E8S68xY6nXJiuQPaJBgBkJwM2LMdOwjWwl0xuV4PUpMs6seoYW7g_DQQsu5QA/exec';
+const APPS_SCRIPT_EXEC = 'https://script.google.com/macros/s/AKfycbyLbJa8WLs_jQ5V17FD2aCeJBDSWWNxC90ZExqcV1GC8mmXW5FjTMtqOABxImh6tMRf8Q/exec';
 
 /** Ruta relativa utilizada en despliegues (Vercel) */
 const DEFAULT_RELATIVE_API = '/api';

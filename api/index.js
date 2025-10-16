@@ -6,7 +6,7 @@
 const fetch = require('node-fetch');
 
 // Configuration via environment variables
-const TARGET_URL = process.env.TARGET_URL || 'https://script.google.com/macros/s/AKfycbwtKk-C0E8S68xY6nXJiuQPaJBgBkJwM2LMdOwjWwl0xuV4PUpMs6seoYW7g_DQQsu5QA/exec';
+const TARGET_URL = process.env.TARGET_URL || 'https://script.google.com/macros/s/AKfycbyLbJa8WLs_jQ5V17FD2aCeJBDSWWNxC90ZExqcV1GC8mmXW5FjTMtqOABxImh6tMRf8Q/exec';
 const ALLOWED_ORIGINS = (process.env.ALLOWED_ORIGINS || 'http://localhost:5500,http://127.0.0.1:5500,http://localhost:5501,http://127.0.0.1:5501').split(',').map(s => s.trim()).filter(Boolean);
 
 // Simple in-memory rate limiter (per IP) for development. Serverless functions
