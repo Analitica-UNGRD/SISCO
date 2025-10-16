@@ -34,7 +34,7 @@ En Vercel (o plataforma equivalente) define Environment Variables:
 Para desarrollo local crea `.env.local` (gitignored) con:
 
 ```
-TARGET_URL="https://script.google.com/macros/s/XXXX/exec"
+TARGET_URL="https://script.google.com/macros/s/AKfycbw50tUdacciGu6UVBEbtRvFjrH7RKL77F6nXF0TYidtsur5QcszRtlYJkG4vLUsabAI8g/exec"
 API_TOKEN="__TU_TOKEN__"
 DISABLE_SESSION_CHECK="1"
 ```
