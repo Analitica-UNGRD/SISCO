@@ -106,7 +106,7 @@ module.exports = async (req, res) => {
     // Forward to TARGET_URL
     const r = await fetch(TARGET_URL, {
       method: 'POST',
-      headers: { 'Content-Type': 'text/plain' },
+      headers: { 'Content-Type': 'application/json' },
       body: bodyText || '{}',
       timeout: 30_000
     });

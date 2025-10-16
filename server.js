@@ -117,7 +117,7 @@ app.post('/api', async (req, res) => {
     console.log(`Proxying request from ${ip} to ${TARGET_URL}`);
     const r = await fetch(TARGET_URL, {
       method: 'POST',
-      headers: { 'Content-Type': 'text/plain' },
+      headers: { 'Content-Type': 'application/json' },
       body: body
     });
 

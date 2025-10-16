@@ -34,7 +34,7 @@ const Auth = {
 				// Realiza la petición de autenticación al servidor
 				const resp = await fetch(APP_CONFIG.BASE_URL, {
 					method: 'POST',
-					headers: { 'Content-Type': 'text/plain' },
+					headers: { 'Content-Type': 'application/json' },
 					body: JSON.stringify({ path: 'login', payload: { email, password } })
 				});
 				if (resp.status === 403) {
