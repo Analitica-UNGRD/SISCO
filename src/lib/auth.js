@@ -37,6 +37,9 @@ const Auth = {
 					headers: { 'Content-Type': 'text/plain' },
 					body: JSON.stringify({ path: 'login', payload: { email, password } })
 				});
+				if (resp.status === 403) {
+					return { success: false, message: 'El servicio de autenticación respondió 403 (forbidden). Verifique permisos del Apps Script o la visibilidad de la hoja.' };
+				}
 				
 				// Procesa la respuesta - tolera respuestas no-JSON (HTML/text) para dar
 				// un mensaje de error legible en vez de lanzar un SyntaxError.
