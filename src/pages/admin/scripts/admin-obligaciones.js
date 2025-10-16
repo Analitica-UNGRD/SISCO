@@ -3,6 +3,9 @@ export default class AdminObligaciones {
   constructor(adminManager) {
     this.adminManager = adminManager;
     this.formId = 'formObligacion';
+    this.currentContratoId = null;
+    this.boundContextHandler = (event) => this.handleContextUpdate(event?.detail || {});
+    this.pendingClearTimeout = null;
     this.init();
   }
 
@@ -10,6 +13,28 @@ export default class AdminObligaciones {
     this.bindFormEvents();
     this.setupValidation();
     this.updateContextFields();
+    this.registerContextListener();
+    this.bootstrapFromContext();
+  }
+
+  registerContextListener() {
+    try {
+      document.addEventListener('admin:context-updated', this.boundContextHandler);
+    } catch (error) {
+      console.warn('No se pudo registrar el listener de contexto para obligaciones', error);
+    }
+  }
+
+  bootstrapFromContext() {
+    try {
+      const detail = {
+        persona: this.adminManager?.ctx?.persona || null,
+        contrato: this.adminManager?.ctx?.contrato || null
+      };
+      this.handleContextUpdate(detail);
+    } catch (error) {
+      console.warn('No se pudo inicializar las obligaciones con el contexto actual', error);
+    }
   }
 
   bindFormEvents() {
@@ -240,6 +265,65 @@ export default class AdminObligaciones {
     return `${monthNames[parseInt(month) - 1]} ${year}`;
   }
 
+  handleContextUpdate(detail = {}) {
+    const contrato = detail?.contrato || null;
+    const contratoId = contrato ? (contrato.contrato_id || contrato.id) : null;
+
+    if (!contratoId) {
+      if (this.currentContratoId !== null) {
+        this.currentContratoId = null;
+        this.safeClearForm();
+      }
+      this.updateContextFields();
+      this.renderPlaceholder('Selecciona un contrato para registrar obligaciones');
+      return;
+    }
+
+    if (this.currentContratoId === contratoId) {
+      this.updateContextFields();
+      return;
+    }
+
+    this.currentContratoId = contratoId;
+    this.updateContextFields();
+    this.safeClearForm();
+    this.renderPlaceholder('Cargando obligaciones del contrato seleccionado...');
+    this.loadObligacionesList();
+  }
+
+  safeClearForm(retry = 0) {
+    const suppressionActive = Boolean(
+      (typeof window !== 'undefined' && (window._globalSuppressClear || window._adminTestSuiteRunning)) ||
+      this.adminManager?._suppressAutoClear
+    );
+
+    if (!suppressionActive) {
+      if (this.pendingClearTimeout) {
+        clearTimeout(this.pendingClearTimeout);
+        this.pendingClearTimeout = null;
+      }
+      this.clearForm();
+      return;
+    }
+
+    if (retry > 5) {
+      return;
+    }
+
+    clearTimeout(this.pendingClearTimeout);
+    this.pendingClearTimeout = setTimeout(() => {
+      this.safeClearForm(retry + 1);
+    }, 150);
+  }
+
+  renderPlaceholder(message) {
+    const placeholder = `<div class="text-gray-500 text-center py-4">${message}</div>`;
+    const previewList = document.getElementById('preview-obligaciones-list');
+    const obligacionesList = document.getElementById('obligaciones-list');
+    if (previewList) previewList.innerHTML = placeholder;
+    if (obligacionesList) obligacionesList.innerHTML = placeholder;
+  }
+
   async handleSubmit() {
     const form = document.getElementById(this.formId);
     if (!form) return;
@@ -284,15 +368,17 @@ export default class AdminObligaciones {
         this.showResult('Obligación guardada exitosamente', 'success');
         
         // Update hidden ID field
-        if (result.data && result.data.obligacion_id) {
+        const returnedId = result.obligacion_id || result?.data?.obligacion_id;
+        if (returnedId) {
           const hiddenIdField = form.querySelector('input[name="obligacion_id"]');
           if (hiddenIdField) {
-            hiddenIdField.value = result.data.obligacion_id;
+            hiddenIdField.value = returnedId;
           }
         }
 
         // Refresh obligations list if available
         await this.loadObligacionesList();
+        this.clearForm();
       } else {
         this.showResult(result?.message || 'Error al guardar la obligación', 'error');
       }
@@ -312,11 +398,19 @@ export default class AdminObligaciones {
       const result = await this.adminManager.apiFetch('getObligacionesByContrato', { contrato_id: contratoId });
       
       if (result && result.ok) {
-        const obligaciones = Array.isArray(result.data) ? result.data : [];
+        const obligaciones = Array.isArray(result.data)
+          ? result.data
+          : Array.isArray(result.items)
+            ? result.items
+            : [];
         this.renderObligacionesList(obligaciones);
+      } else {
+        const message = result?.message || result?.error || 'No se pudieron cargar las obligaciones.';
+        this.renderPlaceholder(message);
       }
     } catch (error) {
       console.error('Error loading obligaciones:', error);
+      this.renderPlaceholder('No se pudieron cargar las obligaciones. Intenta nuevamente.');
     }
   }
 
@@ -397,6 +491,18 @@ export default class AdminObligaciones {
     });
 
     this.updatePreview();
+  }
+
+  destroy() {
+    try {
+      document.removeEventListener('admin:context-updated', this.boundContextHandler);
+    } catch (error) {
+      console.warn('No se pudo desregistrar el listener de contexto de obligaciones', error);
+    }
+    if (this.pendingClearTimeout) {
+      clearTimeout(this.pendingClearTimeout);
+      this.pendingClearTimeout = null;
+    }
   }
 
   // Clear form

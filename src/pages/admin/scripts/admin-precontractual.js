@@ -262,6 +262,10 @@ export default class AdminPrecontractual {
   async handleSubmit() {
     try {
       const formData = this.getFormData();
+
+      if (!formData.pre_id) {
+        delete formData.pre_id;
+      }
       
       // Validar datos requeridos
       if (!this.validateFormData(formData)) {
@@ -288,15 +292,13 @@ export default class AdminPrecontractual {
         } else {
           console.log('Evento precontractual guardado exitosamente');
         }
-        // Set pre_id returned by backend into hidden and visible fields
-        if (response.pre_id) {
-          const preIdHidden = document.getElementById('pre_id');
-          const preIdVisible = document.getElementById('pre_pre_id');
-          if (preIdHidden) preIdHidden.value = response.pre_id;
-          if (preIdVisible) preIdVisible.value = response.pre_id;
-        }
+        const newPreId = response.pre_id || '';
         // Keep persona context, but clear other form fields
-        this.clearForm();
+        this.clearForm({ preservePreId: false });
+        if (newPreId) {
+          const preIdVisible = document.getElementById('pre_pre_id');
+          if (preIdVisible) preIdVisible.value = newPreId;
+        }
         // Restore persona name/id after clearForm (if present in adminManager.ctx)
         try {
           const currentPersonaId = this.adminManager?.ctx?.persona?.id || this.adminManager?.ctx?.persona?.persona_id || '';
@@ -524,35 +526,48 @@ export default class AdminPrecontractual {
     `;
   }
 
-  clearForm() {
-    if (this.form) {
-      // Preserve persona_id/name and pre_id; clear other fields
-      const personaId = document.getElementById('pre_persona_id')?.value || '';
-      const personaName = document.getElementById('pre_persona_name')?.value || '';
-      const preId = document.getElementById('pre_id')?.value || '';
+  clearForm(options = {}) {
+    if (!this.form) return;
 
-      // Reset and then restore preserved values
-      this.form.reset();
-      if (personaId) document.getElementById('pre_persona_id').value = personaId;
-      if (personaName) document.getElementById('pre_persona_name').value = personaName;
-      if (preId) {
-        const preHidden = document.getElementById('pre_id');
-        const preVisible = document.getElementById('pre_pre_id');
-        if (preHidden) preHidden.value = preId;
-        if (preVisible) preVisible.value = preId;
-      }
+    const { preservePreId = false } = options;
+
+    // Preserve persona context; clear other fields unless explicitly requested
+    const personaId = document.getElementById('pre_persona_id')?.value || '';
+    const personaName = document.getElementById('pre_persona_name')?.value || '';
+    const preId = preservePreId ? (document.getElementById('pre_id')?.value || '') : '';
+
+    this.form.reset();
+
+    if (personaId) {
+      const personaHidden = document.getElementById('pre_persona_id');
+      if (personaHidden) personaHidden.value = personaId;
+    }
+
+    if (personaName) {
+      const personaVisible = document.getElementById('pre_persona_name');
+      if (personaVisible) personaVisible.value = personaName;
+    }
+
+    const preHidden = document.getElementById('pre_id');
+    const preVisible = document.getElementById('pre_pre_id');
+    if (preservePreId && preId) {
+      if (preHidden) preHidden.value = preId;
+      if (preVisible) preVisible.value = preId;
+    } else {
+      if (preHidden) preHidden.value = '';
+      if (preVisible) preVisible.value = '';
+    }
 
     this.setDefaultDate();
     this.clearFasesDropdown();
     this.applyIntentoLock(true);
-      
-      // Limpiar errores
-      const errorElements = this.form.querySelectorAll('.field-error');
-      errorElements.forEach(error => error.remove());
-      
-      const errorFields = this.form.querySelectorAll('.border-red-500');
-      errorFields.forEach(field => field.classList.remove('border-red-500'));
-    }
+
+    // Limpiar errores
+    const errorElements = this.form.querySelectorAll('.field-error');
+    errorElements.forEach(error => error.remove());
+
+    const errorFields = this.form.querySelectorAll('.border-red-500');
+    errorFields.forEach(field => field.classList.remove('border-red-500'));
   }
 
   // Método llamado cuando se selecciona una persona
