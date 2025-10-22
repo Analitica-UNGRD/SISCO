@@ -1,0 +1,238 @@
+<!-- Contractual Modificaciones Component -->
+<section id="section-contractual-modificaciones" class="form-section mt-4">
+  <div class="form-section-header">
+    <h3><span class="material-icons">sync_alt</span> Modificaciones</h3>
+    <span class="material-icons toggle-icon">expand_more</span>
+  </div>
+  <div class="form-section-content">
+    <p class="text-sm text-gray-600 mb-4">Registra y consulta los otrosíes y modificaciones contractuales asociadas al contrato seleccionado. La secuencia se asigna automáticamente por contrato.</p>
+
+    <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
+      <div id="contractualModificacionesSummary" class="text-xs text-gray-500">Selecciona un contrato para ver sus modificaciones.</div>
+      <div class="flex items-center gap-2">
+        <button type="button" id="contractualModificacionesRefresh" class="flex items-center gap-1 px-3 py-2 border rounded text-xs text-slate-600 hover:bg-slate-50">
+          <span class="material-icons text-sm">refresh</span>
+          <span>Recargar</span>
+        </button>
+        <button type="button" id="contractualModificacionesNew" class="flex items-center gap-1 px-3 py-2 border rounded text-xs text-indigo-600 hover:bg-indigo-50">
+          <span class="material-icons text-sm">add_circle</span>
+          <span>Nueva modificación</span>
+        </button>
+      </div>
+    </div>
+
+    <div id="contractualModificacionesList" class="space-y-3"></div>
+
+    <form id="formModificacion" class="mt-6 space-y-6" novalidate>
+      <input type="hidden" name="modificacion_id" id="mod_modificacion_id" />
+      <input type="hidden" name="contrato_id" id="mod_contrato_id" />
+      <input type="hidden" name="persona_id" id="mod_persona_id" />
+
+      <div class="bg-slate-50 border border-slate-200 rounded-md p-4 space-y-4">
+        <div class="text-xs font-semibold text-slate-600 uppercase tracking-wide">Identificadores y relación</div>
+        <div class="field-group field-group-row-3">
+          <div>
+            <label class="block text-sm font-medium text-gray-700">Secuencia</label>
+            <div class="input-wrapper">
+              <input name="secuencia_mod" id="mod_secuencia_mod" type="number" min="1" placeholder="Auto" class="mt-1 p-2 border rounded w-full bg-gray-50" readonly />
+            </div>
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700">Tipo de modificación</label>
+            <div class="input-wrapper">
+              <select name="tipo_modificacion" id="mod_tipo_modificacion" class="mt-1 p-2 border rounded w-full" required>
+                <option value="">-- Seleccione --</option>
+                <option value="Otrosí">Otrosí</option>
+                <option value="Prórroga">Prórroga</option>
+                <option value="Adición">Adición</option>
+                <option value="Disminución">Disminución</option>
+                <option value="Suspensión">Suspensión</option>
+                <option value="Reinicio">Reinicio</option>
+                <option value="Cesión">Cesión</option>
+                <option value="Terminación anticipada">Terminación anticipada</option>
+                <option value="Cambio de supervisor">Cambio de supervisor</option>
+                <option value="Cambio de objeto">Cambio de objeto</option>
+                <option value="Ajuste de forma de pago">Ajuste de forma de pago</option>
+                <option value="Otros">Otros</option>
+              </select>
+            </div>
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700">Número del acto</label>
+            <div class="input-wrapper">
+              <input name="numero_acto" id="mod_numero_acto" placeholder="Ej: Otrosí 01" class="mt-1 p-2 border rounded w-full" />
+            </div>
+          </div>
+        </div>
+        <div class="field-group field-group-row-3">
+          <div>
+            <label class="block text-sm font-medium text-gray-700">Fecha de suscripción</label>
+            <div class="input-wrapper">
+              <input name="fecha_suscripcion" id="mod_fecha_suscripcion" type="date" class="mt-1 p-2 border rounded w-full" />
+            </div>
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700">Efecto desde</label>
+            <div class="input-wrapper">
+              <input name="fecha_efecto_desde" id="mod_fecha_efecto_desde" type="date" class="mt-1 p-2 border rounded w-full" />
+            </div>
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700">Efecto hasta</label>
+            <div class="input-wrapper">
+              <input name="fecha_efecto_hasta" id="mod_fecha_efecto_hasta" type="date" class="mt-1 p-2 border rounded w-full" />
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="bg-white border border-slate-200 rounded-md p-4 space-y-4">
+        <div class="text-xs font-semibold text-slate-600 uppercase tracking-wide">Impactos al contrato</div>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div class="space-y-3">
+            <label class="flex items-center gap-2 text-sm text-gray-700">
+              <input type="checkbox" name="impacta_plazo" id="mod_impacta_plazo" class="h-4 w-4" />
+              <span>Impacta plazo</span>
+            </label>
+            <div class="field-group field-group-row-2">
+              <div>
+                <label class="block text-sm font-medium text-gray-700">Días prórroga</label>
+                <div class="input-wrapper">
+                  <input name="dias_prorroga" id="mod_dias_prorroga" type="number" placeholder="0" class="mt-1 p-2 border rounded w-full" />
+                </div>
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-700">Meses prórroga</label>
+                <div class="input-wrapper">
+                  <input name="meses_prorroga" id="mod_meses_prorroga" type="number" placeholder="0" class="mt-1 p-2 border rounded w-full" />
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="space-y-3">
+            <label class="flex items-center gap-2 text-sm text-gray-700">
+              <input type="checkbox" name="impacta_valor" id="mod_impacta_valor" class="h-4 w-4" />
+              <span>Impacta valor</span>
+            </label>
+            <div class="field-group field-group-row-2">
+              <div>
+                <label class="block text-sm font-medium text-gray-700">Valor adicionado</label>
+                <div class="input-wrapper">
+                  <input name="valor_adicionado" id="mod_valor_adicionado" type="number" min="0" step="0.01" placeholder="0" class="mt-1 p-2 border rounded w-full" />
+                </div>
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-700">Valor disminuido</label>
+                <div class="input-wrapper">
+                  <input name="valor_disminuido" id="mod_valor_disminuido" type="number" min="0" step="0.01" placeholder="0" class="mt-1 p-2 border rounded w-full" />
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div class="space-y-3">
+            <label class="flex items-center gap-2 text-sm text-gray-700">
+              <input type="checkbox" name="impacta_supervisor" id="mod_impacta_supervisor" class="h-4 w-4" />
+              <span>Cambio de supervisor</span>
+            </label>
+            <div>
+              <label class="block text-sm font-medium text-gray-700">Supervisor nuevo</label>
+              <div class="input-wrapper">
+                <input name="supervisor_nuevo" id="mod_supervisor_nuevo" placeholder="Nombre" class="mt-1 p-2 border rounded w-full" />
+              </div>
+            </div>
+          </div>
+          <div class="space-y-3">
+            <label class="flex items-center gap-2 text-sm text-gray-700">
+              <input type="checkbox" name="impacta_objeto" id="mod_impacta_objeto" class="h-4 w-4" />
+              <span>Modifica objeto</span>
+            </label>
+            <div>
+              <label class="block text-sm font-medium text-gray-700">Nuevo objeto</label>
+              <div class="input-wrapper">
+                <textarea name="objeto_nuevo" id="mod_objeto_nuevo" rows="2" placeholder="Descripción del nuevo objeto" class="mt-1 p-2 border rounded w-full"></textarea>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-sm font-medium text-gray-700">Observaciones</label>
+          <div class="input-wrapper">
+            <textarea name="observaciones" id="mod_observaciones" rows="3" placeholder="Notas adicionales" class="mt-1 p-2 border rounded w-full"></textarea>
+          </div>
+        </div>
+      </div>
+
+      <div class="bg-slate-50 border border-slate-200 rounded-md p-4 space-y-4">
+        <div class="text-xs font-semibold text-slate-600 uppercase tracking-wide">Soportes y presupuesto</div>
+        <div class="field-group field-group-row-2">
+          <div>
+            <label class="block text-sm font-medium text-gray-700">URL soporte</label>
+            <div class="input-wrapper">
+              <input name="soporte_URL" id="mod_soporte_URL" placeholder="https://" class="mt-1 p-2 border rounded w-full" />
+            </div>
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700">Carpeta Drive</label>
+            <div class="input-wrapper">
+              <input name="carpeta_drive_url" id="mod_carpeta_drive_url" placeholder="https://" class="mt-1 p-2 border rounded w-full" />
+            </div>
+          </div>
+        </div>
+        <div class="field-group field-group-row-2">
+          <div>
+            <label class="block text-sm font-medium text-gray-700">Número CDP adicional</label>
+            <div class="input-wrapper">
+              <input name="numero_CDP_adicional" id="mod_numero_CDP_adicional" placeholder="Número" class="mt-1 p-2 border rounded w-full" />
+            </div>
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700">Fecha CDP adicional</label>
+            <div class="input-wrapper">
+              <input name="fecha_CDP_adicional" id="mod_fecha_CDP_adicional" type="date" class="mt-1 p-2 border rounded w-full" />
+            </div>
+          </div>
+        </div>
+        <div class="field-group field-group-row-2">
+          <div>
+            <label class="block text-sm font-medium text-gray-700">Número RC adicional</label>
+            <div class="input-wrapper">
+              <input name="numero_RC_adicional" id="mod_numero_RC_adicional" placeholder="Número" class="mt-1 p-2 border rounded w-full" />
+            </div>
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700">Fecha RC adicional</label>
+            <div class="input-wrapper">
+              <input name="fecha_RC_adicional" id="mod_fecha_RC_adicional" type="date" class="mt-1 p-2 border rounded w-full" />
+            </div>
+          </div>
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700">Estado del trámite</label>
+          <div class="input-wrapper">
+            <select name="estado_modificacion" id="mod_estado_modificacion" class="mt-1 p-2 border rounded w-full">
+              <option value="">-- Seleccione --</option>
+              <option value="Borrador">Borrador</option>
+              <option value="En trámite">En trámite</option>
+              <option value="Aprobada">Aprobada</option>
+              <option value="Rechazada">Rechazada</option>
+              <option value="Revocada">Revocada</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <div class="flex justify-end gap-2">
+        <button type="button" id="contractualModificacionesCancel" class="px-4 py-2 text-sm border rounded hover:bg-gray-50">Cancelar</button>
+        <button type="submit" id="contractualModificacionesSave" class="px-4 py-2 text-sm bg-indigo-600 text-white rounded flex items-center gap-1 hover:bg-indigo-700">
+          <span class="material-icons text-sm">save</span>
+          <span>Guardar modificación</span>
+        </button>
+      </div>
+      <div id="contractualModificacionesResult" class="mt-3 text-sm"></div>
+    </form>
+  </div>
+</section>

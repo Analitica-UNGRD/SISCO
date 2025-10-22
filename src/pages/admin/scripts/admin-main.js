@@ -33,7 +33,7 @@ class AdminComponentManager {
   constructor() {
     this.components = new Map();
     this.currentSection = 'contractual';
-    this.ctx = { persona: null, contrato: null }; // Always start clean
+  this.ctx = { persona: null, contrato: null, modificaciones: [] }; // Always start clean
     this.CTX_KEY = 'admin_ctx_v1';
     this.__apiLogs = [];
     
@@ -147,12 +147,14 @@ class AdminComponentManager {
           const datosBasicos = await this.loadComponent('datos-basicos');
           const contratos = await this.loadComponent('contratos');
           const contractualObligaciones = await this.loadComponent('contractual-obligaciones');
+          const contractualModificaciones = await this.loadComponent('contractual-modificaciones');
           componentHtml = `
             <div class="dual-panel">
               <div class="form-panel-section">
                 ${datosBasicos}
                 ${contratos}
                 ${contractualObligaciones}
+                ${contractualModificaciones}
               </div>
               <div class="preview-panel-section">
                 ${previewHtml}
@@ -310,7 +312,8 @@ class AdminComponentManager {
       case 'contractual':
         const DatosBasicos = await this.loadComponentScript('datos-basicos');
         const Contratos = await this.loadComponentScript('contratos');
-        const ContractualObligaciones = await this.loadComponentScript('contractual-obligaciones');
+  const ContractualObligaciones = await this.loadComponentScript('contractual-obligaciones');
+  const ContractualModificaciones = await this.loadComponentScript('contractual-modificaciones');
         
         if (DatosBasicos) {
           componentInstances.datosBasicos = new DatosBasicos(this);
@@ -320,6 +323,9 @@ class AdminComponentManager {
         }
         if (ContractualObligaciones) {
           componentInstances.contractualObligaciones = new ContractualObligaciones(this);
+        }
+        if (ContractualModificaciones) {
+          componentInstances.contractualModificaciones = new ContractualModificaciones(this);
         }
         break;
         
@@ -1054,7 +1060,7 @@ class AdminComponentManager {
   handleResetForm() {
     try {
       // Clear context
-      this.ctx = { persona: null, contrato: null };
+  this.ctx = { persona: null, contrato: null, modificaciones: [] };
       this.saveContext();
       
       // Update UI
@@ -1133,7 +1139,10 @@ class AdminComponentManager {
           }
         }
 
-        this.ctx = parsed;
+        this.ctx = Object.assign({ persona: null, contrato: null, modificaciones: [] }, parsed);
+        if (!Array.isArray(this.ctx.modificaciones)) {
+          this.ctx.modificaciones = [];
+        }
         this.updateContextUI();
       }
     } catch (error) {
@@ -1652,7 +1661,8 @@ class AdminComponentManager {
   selectContrato(contrato) {
   console.log('Seleccionando contrato:', contrato);
     
-    this.ctx.contrato = contrato;
+  this.ctx.contrato = contrato;
+  this.ctx.modificaciones = [];
     this.saveContext();
     this.updateContextUI();
     
@@ -1919,6 +1929,80 @@ class AdminComponentManager {
   if (elFechaRC) { 
     const v = cFechaRCRaw ? formatDisplayDate(cFechaRCRaw) : '-'; 
     if ('value' in elFechaRC) elFechaRC.value = v; else elFechaRC.textContent = v;
+  }
+
+  // Modificaciones preview block
+  const mods = Array.isArray(this.ctx.modificaciones) ? this.ctx.modificaciones : [];
+  const modsSummaryEl = document.getElementById('preview-modificaciones-summary');
+  const modsListEl = document.getElementById('preview-modificaciones-list');
+  const modsChipEl = document.getElementById('preview-modificacion-chip');
+
+  if (modsSummaryEl) {
+    if (!mods.length) {
+      modsSummaryEl.textContent = 'Sin modificaciones registradas.';
+    } else {
+      const latestMod = mods[mods.length - 1] || {};
+      const latestType = latestMod.tipo_modificacion || latestMod.Tipo_modificacion || '-';
+      const latestEstado = latestMod.estado_modificacion || latestMod.Estado_modificacion || '-';
+      const latestDate = latestMod.fecha_suscripcion || latestMod.fecha_efecto_desde || latestMod.fecha_efecto_hasta || '';
+      const formattedDate = latestDate ? formatDisplayDate(latestDate) : '';
+      modsSummaryEl.textContent = `${mods.length} modificación${mods.length === 1 ? '' : 'es'} · Último: ${latestType} (${latestEstado})${formattedDate ? ' · ' + formattedDate : ''}`;
+    }
+  }
+
+  if (modsListEl) {
+    if (!mods.length) {
+      modsListEl.innerHTML = '';
+    } else {
+      const toBool = (val) => {
+        if (val === true) return true;
+        if (val === false || val === null || val === undefined) return false;
+        if (typeof val === 'number') return val !== 0;
+        const str = String(val).trim().toLowerCase();
+        return str === 'true' || str === '1' || str === 'si' || str === 'sí' || str === 'x';
+      };
+      const recent = mods.slice(-3).reverse();
+      modsListEl.innerHTML = recent.map((item) => {
+        const tipo = item.tipo_modificacion || item.Tipo_modificacion || '-';
+        const seq = item.secuencia_mod || item.Secuencia || item.secuencia || '-';
+        const estado = item.estado_modificacion || item.Estado_modificacion || '-';
+        const fecha = item.fecha_suscripcion || item.fecha_efecto_desde || item.fecha_efecto_hasta || '';
+        const formattedFecha = fecha ? formatDisplayDate(fecha) : 's/d';
+        const plazoImpact = toBool(item.impacta_plazo);
+        const valorImpact = toBool(item.impacta_valor);
+        const flagParts = [];
+        if (plazoImpact) flagParts.push('Plazo');
+        if (valorImpact) flagParts.push('Valor');
+        const flags = flagParts.length ? ` • ${flagParts.join(' & ')}` : '';
+        return `
+          <div class="preview-mini-field preview-mod-item">
+            <span class="material-icons">sync_alt</span>
+            <div class="preview-mod-item-text">
+              <div class="preview-mod-item-title">${tipo} · Seq ${seq}</div>
+              <div class="preview-mod-item-meta">${formattedFecha} · ${estado}${flags}</div>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+  }
+
+  if (modsChipEl) {
+    const latestOtrosi = [...mods].reverse().find((item) => {
+      const tipo = (item.tipo_modificacion || item.Tipo_modificacion || '').toString().toLowerCase();
+      return tipo.includes('otros');
+    });
+    if (latestOtrosi) {
+      const seq = latestOtrosi.secuencia_mod || latestOtrosi.secuencia || '';
+      const estado = latestOtrosi.estado_modificacion || latestOtrosi.Estado_modificacion || '';
+      const seqText = seq ? ` #${seq}` : '';
+      const estadoText = estado ? ` · ${estado}` : '';
+      modsChipEl.textContent = `Otrosí${seqText}${estadoText}`;
+      modsChipEl.classList.remove('hidden');
+    } else {
+      modsChipEl.classList.add('hidden');
+      modsChipEl.textContent = '';
+    }
   }
 
     console.log('Preview panel actualizado para:', nombre);

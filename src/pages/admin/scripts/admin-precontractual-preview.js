@@ -35,6 +35,27 @@ function normalizeEventName(name) {
     .toLowerCase();
 }
 
+function normalizeStageName(name) {
+  return normalizeEventName(name);
+}
+
+const PRECONTRACTUAL_STAGE_ORDER = [
+  'Creacion',
+  'Solicitud CDP',
+  'SIGEP',
+  'Examenes Medicos',
+  'Revision',
+  'Fiduprevisora',
+  'GGC-Registro Presupuestal',
+  'Acta de Inicio y Designacion de Supervision'
+];
+
+const STAGE_ORDER_LOOKUP = new Map();
+
+PRECONTRACTUAL_STAGE_ORDER.forEach((stage, index) => {
+  STAGE_ORDER_LOOKUP.set(normalizeStageName(stage), index);
+});
+
 SPECIAL_EVENT_VARIANTS.forEach(variant => {
   variant.matchers.forEach(alias => {
     SPECIAL_EVENT_LOOKUP.set(normalizeEventName(alias), variant);
@@ -180,7 +201,30 @@ export default class AdminPrecontractualPreview {
   const fasesArr = (etapaFasesMap && etapaFasesMap[etapaGroup.etapa]) || [];
   return this.calculateEtapaDuration(etapaGroup, finalizaSet, fasesArr);
     }).sort((a, b) => {
-      // Sort by etapa name, then by intento
+      const normalizedA = normalizeStageName(a.etapa);
+      const normalizedB = normalizeStageName(b.etapa);
+      const orderA = STAGE_ORDER_LOOKUP.has(normalizedA) ? STAGE_ORDER_LOOKUP.get(normalizedA) : null;
+      const orderB = STAGE_ORDER_LOOKUP.has(normalizedB) ? STAGE_ORDER_LOOKUP.get(normalizedB) : null;
+
+      const hasOrderA = typeof orderA === 'number';
+      const hasOrderB = typeof orderB === 'number';
+
+      if (hasOrderA || hasOrderB) {
+        if (!hasOrderA) return 1;
+        if (!hasOrderB) return -1;
+        if (orderA !== orderB) return orderA - orderB;
+      }
+
+      const dateA = (a.startDate instanceof Date && !Number.isNaN(a.startDate.getTime()))
+        ? a.startDate.getTime()
+        : Number.POSITIVE_INFINITY;
+      const dateB = (b.startDate instanceof Date && !Number.isNaN(b.startDate.getTime()))
+        ? b.startDate.getTime()
+        : Number.POSITIVE_INFINITY;
+      if (dateA !== dateB) {
+        return dateA - dateB;
+      }
+
       if (a.etapa !== b.etapa) {
         return a.etapa.localeCompare(b.etapa);
       }
@@ -324,6 +368,26 @@ export default class AdminPrecontractualPreview {
     return { baseEvents, variantBuckets };
   }
 
+  getEarliestDateFromEvents(events = []) {
+    if (!Array.isArray(events) || events.length === 0) {
+      return null;
+    }
+
+    const validDates = events
+      .map(evt => {
+        if (!evt || !evt.Fecha) return null;
+        const parsed = new Date(evt.Fecha);
+        return parsed instanceof Date && !Number.isNaN(parsed.getTime()) ? parsed : null;
+      })
+      .filter(Boolean);
+
+    if (!validDates.length) {
+      return null;
+    }
+
+    return new Date(Math.min(...validDates.map(date => date.getTime())));
+  }
+
   buildPhaseBlocks(sortedEvents = [], fasesArr = []) {
     const events = Array.isArray(sortedEvents)
       ? sortedEvents.slice().sort((a, b) => new Date(a.Fecha) - new Date(b.Fecha))
@@ -364,6 +428,7 @@ export default class AdminPrecontractualPreview {
         : (phaseEvents.length ? phaseEvents[phaseEvents.length - 1] : null);
 
       const baseDate = baseLatestEvent ? new Date(baseLatestEvent.Fecha) : null;
+      const earliestPhaseDate = this.getEarliestDateFromEvents(phaseEvents);
       const baseStatus = this.determinePhaseStatus(baseEvents, phaseEvents.length ? 'En proceso' : 'Pendiente');
 
       // Base block (even if no base events, to keep context)
@@ -382,7 +447,9 @@ export default class AdminPrecontractualPreview {
         baseLabel: normalizedLabel,
         alertText: '',
         orderIndex: index * 10,
-        hasVariants: variantBuckets.size > 0
+        hasVariants: variantBuckets.size > 0,
+        sortDate: earliestPhaseDate ? earliestPhaseDate.getTime() : Number.POSITIVE_INFINITY,
+        firstEventDate: earliestPhaseDate
       });
 
       // Variant blocks (corrección, subsanación, ajuste, etc.)
@@ -398,6 +465,7 @@ export default class AdminPrecontractualPreview {
 
         const variantLatest = variantEvents[variantEvents.length - 1];
         const variantDate = variantLatest ? new Date(variantLatest.Fecha) : null;
+        const variantEarliest = this.getEarliestDateFromEvents(variantEvents);
         blocks.push({
           label: normalizedLabel,
           displayLabel: `${normalizedLabel} · ${variantConfig.displayLabel}`,
@@ -413,14 +481,37 @@ export default class AdminPrecontractualPreview {
           baseLabel: normalizedLabel,
           alertText: variantConfig.badge,
           orderIndex: index * 10 + 1,
-          hasVariants: false
+          hasVariants: false,
+          sortDate: variantEarliest
+            ? variantEarliest.getTime()
+            : (earliestPhaseDate ? earliestPhaseDate.getTime() : Number.POSITIVE_INFINITY),
+          firstEventDate: variantEarliest || earliestPhaseDate
         });
       });
     });
 
     return blocks
       .filter(block => block.count > 0 || block.variantKey || block.hasVariants)
-      .sort((a, b) => a.orderIndex - b.orderIndex || (a.variantKey ? 1 : -1));
+      .sort((a, b) => {
+        const dateA = typeof a.sortDate === 'number' ? a.sortDate : Number.POSITIVE_INFINITY;
+        const dateB = typeof b.sortDate === 'number' ? b.sortDate : Number.POSITIVE_INFINITY;
+
+        if (dateA !== dateB) {
+          return dateA - dateB;
+        }
+
+        const variantWeightA = a.variantKey ? 1 : 0;
+        const variantWeightB = b.variantKey ? 1 : 0;
+        if (variantWeightA !== variantWeightB) {
+          return variantWeightA - variantWeightB;
+        }
+
+        if (a.orderIndex !== b.orderIndex) {
+          return a.orderIndex - b.orderIndex;
+        }
+
+        return (a.displayLabel || a.label || '').localeCompare(b.displayLabel || b.label || '');
+      });
   }
 
   renderTimeline() {

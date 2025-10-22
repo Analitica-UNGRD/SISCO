@@ -21,8 +21,28 @@ const PORT = process.env.PORT || 3000; // default dev port for proxy
 // Comma-separated allowed origins (set ALLOWED_ORIGINS env var if needed)
 // Default has common dev origins for local testing. Update TARGET_URL to
 // point to your Apps Script deployment if it changes.
-const TARGET_URL = process.env.TARGET_URL || 'https://script.google.com/macros/s/AKfycbyLbJa8WLs_jQ5V17FD2aCeJBDSWWNxC90ZExqcV1GC8mmXW5FjTMtqOABxImh6tMRf8Q/exec';
+const TARGET_URL = process.env.TARGET_URL || 'https://script.google.com/macros/s/AKfycbzZgWk3zBir2wCNHJURz7NCaPI3VGKQJa5QggxLry_K7FT7mEzDsMk5KGuKwd10xPgB-w/exec';
 const ALLOWED_ORIGINS = (process.env.ALLOWED_ORIGINS || 'http://localhost:5500,http://127.0.0.1:5500,http://localhost:5501,http://127.0.0.1:5501,http://192.168.1.11:5500,http://localhost:3000').split(',').map(s=>s.trim()).filter(Boolean);
+
+// Detect typical private network hosts (10.x, 172.16-31.x, 192.168.x) so the
+// frontend can be opened via the LAN IP without tripping CORS during dev.
+function isPrivateDevOrigin(origin) {
+  if (!origin) return false;
+  try {
+    const { hostname } = new URL(origin);
+    if (!hostname) return false;
+    if (hostname === 'localhost' || hostname === '127.0.0.1') return true;
+    if (hostname.startsWith('10.')) return true;
+    if (hostname.startsWith('192.168.')) return true;
+    if (hostname.startsWith('172.')) {
+      const octet = Number(hostname.split('.')[1] || '0');
+      return octet >= 16 && octet <= 31;
+    }
+  } catch (err) {
+    return false;
+  }
+  return false;
+}
 
 // Basic request size limit and parsers
 // Use text body parser to accept 'text/plain' and generic payloads sent by the
@@ -39,7 +59,7 @@ app.use(express.static('./', { index: 'index.html' }));
 // enabling credentials only when necessary.
 app.use(function(req, res, next){
   const origin = req.headers.origin || '';
-  if (origin && (ALLOWED_ORIGINS.includes('*') || ALLOWED_ORIGINS.includes(origin))) {
+  if (origin && (ALLOWED_ORIGINS.includes('*') || ALLOWED_ORIGINS.includes(origin) || isPrivateDevOrigin(origin))) {
     res.setHeader('Access-Control-Allow-Origin', origin);
   } else if (ALLOWED_ORIGINS.length) {
     res.setHeader('Access-Control-Allow-Origin', ALLOWED_ORIGINS[0]);
@@ -87,7 +107,7 @@ function setCorsHeaders(req, res){
     res.set('Access-Control-Allow-Origin', ALLOWED_ORIGINS.includes('*') ? '*' : ALLOWED_ORIGINS[0]);
     return;
   }
-  if (ALLOWED_ORIGINS.includes('*') || ALLOWED_ORIGINS.includes(origin)) {
+  if (ALLOWED_ORIGINS.includes('*') || ALLOWED_ORIGINS.includes(origin) || isPrivateDevOrigin(origin)) {
     res.set('Access-Control-Allow-Origin', origin);
   }
   res.set('Access-Control-Allow-Methods', 'GET,POST,OPTIONS');

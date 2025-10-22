@@ -29,7 +29,10 @@
           </div>
           <div class="preview-basic-info">
             <input id="preview-nombre" class="preview-name-input" placeholder="Nombre del contratista" readonly />
-            <div id="preview-estado-badge" class="preview-status-badge"></div>
+            <div class="preview-status-stack">
+              <div id="preview-estado-badge" class="preview-status-badge"></div>
+              <div id="preview-modificacion-chip" class="preview-mod-chip hidden">Otrosí</div>
+            </div>
           </div>
         </div>
         
@@ -175,6 +178,16 @@
               </div>
             </div>
           </div>
+        </div>
+
+        <!-- Modificaciones -->
+        <div class="preview-compact-section preview-modificaciones-section">
+          <h5 class="preview-section-title">
+            <span class="material-icons">sync_alt</span>
+            Modificaciones
+          </h5>
+          <div id="preview-modificaciones-summary" class="preview-mod-summary">Sin modificaciones registradas.</div>
+          <div id="preview-modificaciones-list" class="preview-mod-list"></div>
         </div>
 
       </div>
