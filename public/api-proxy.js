@@ -1,6 +1,24 @@
 // Este archivo permite redirigir las peticiones al backend desde el frontend
 // cuando se está ejecutando con http-server simple
 (function(){
+  try {
+    if (typeof window === 'undefined' || !window.location) {
+      return;
+    }
+
+    const hostname = window.location.hostname || '';
+    const isLocalHost = hostname === 'localhost' || hostname === '127.0.0.1';
+    const isPrivateNet = /^10\./.test(hostname) || /^192\.168\./.test(hostname) || /^172\.(1[6-9]|2\d|3[0-1])\./.test(hostname);
+
+    if (!(isLocalHost || isPrivateNet)) {
+      // Evita interceptar peticiones ni comprobar servidores locales en entornos productivos (ej. Vercel).
+      return;
+    }
+  } catch (err) {
+    // Si no podemos evaluar el hostname, asumimos entorno remoto y salimos.
+    return;
+  }
+
   const originalFetch = window.fetch.bind(window);
 
   async function resolveRequestInit(input, init){

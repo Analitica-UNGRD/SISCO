@@ -3,17 +3,46 @@
 import { adminTemplate, contractorTemplate } from './templates.js';
 import { loadDashboardData } from '/src/pages-scripts/dashboard.js';
 import { USE_MOCKS, fetchSessionInfoMock } from './api.mocks.js';
+import { APP_CONFIG } from '/src/lib/config.js';
 
-const SESSION_URL = 'https://script.google.com/macros/s/XXXX/getSessionInfo'; // reemplazar cuando esté listo
-
-// Realiza GET a /getSessionInfo usando Content-Type: text/plain para evitar preflight.
+// Obtiene la sesión actual a través del proxy configurado en APP_CONFIG.BASE_URL.
 export async function fetchSessionInfo() {
   try {
     if (USE_MOCKS) return fetchSessionInfoMock();
 
-    const res = await fetch(SESSION_URL, { method: 'GET', headers: { 'Content-Type': 'text/plain' } });
-    if (!res.ok) throw new Error('HTTP ' + res.status);
-    return await res.json();
+    if (!APP_CONFIG || !APP_CONFIG.BASE_URL) {
+      console.warn('APP_CONFIG.BASE_URL no está configurado, regresando fallback.');
+      return { fallback: true, error: 'APP_CONFIG.BASE_URL no configurado' };
+    }
+
+    const response = await fetch(APP_CONFIG.BASE_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ path: 'getSessionInfo', payload: {} })
+    });
+
+    if (response.status === 403) {
+      return { fallback: true, error: 'El servicio de sesión respondió 403 (forbidden).' };
+    }
+
+    const raw = await response.text();
+    let data;
+    try {
+      data = raw && raw.length ? JSON.parse(raw) : null;
+    } catch (parseErr) {
+      console.warn('Respuesta no JSON al obtener sesión:', parseErr, raw ? raw.substring(0, 150) : '');
+      return { fallback: true, error: 'Respuesta no válida del backend de sesión' };
+    }
+
+    if (!data || !data.ok) {
+      return { fallback: true, error: (data && data.error) || 'Error obteniendo sesión' };
+    }
+
+    return {
+      email: data.email || '',
+      role: data.rol || '',
+      name: data.nombre || data.name || ''
+    };
   } catch (err) {
     console.warn('fetchSessionInfo failed:', err);
     return { fallback: true, error: err.message };
