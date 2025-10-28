@@ -5,6 +5,7 @@
 
 import { getConfig } from '../lib/config.js';
 import { simpleSearch, globalSearch } from '../lib/search.js';
+import { showLoader, hideLoader } from '../lib/loader.js';
 
 /** URL del script de Google Apps Script */
 let SCRIPT_URL = '';
@@ -204,7 +205,7 @@ function renderFilteredVistaResumida(filteredCandidatos) {
  */
 async function loadDashboard() {
   try {
-    showLoading(true);
+    showLoading(true, null, 'Cargando datos del dashboard...');
     
     // Usar handlers existentes para obtener datos
     console.log('Cargando datos del dashboard usando handlers existentes...');
@@ -535,7 +536,7 @@ async function renderVistaResumida() {
   const container = document.getElementById('vista-resumida');
   if (!container) return;
   
-  showLoading(true, 'vista-resumida');
+  showLoading(true, 'vista-resumida', 'Actualizando vista resumida...');
   
   try {
     // Obtener datos procesados
@@ -635,6 +636,8 @@ async function renderVistaResumida() {
   } catch (error) {
     console.error('Error renderizando vista resumida:', error);
     container.innerHTML = '<div class="text-red-500 text-center py-8">Error al cargar candidatos</div>';
+  } finally {
+    showLoading(false, 'vista-resumida');
   }
 }
 
@@ -846,7 +849,7 @@ async function renderTimelineGeneral(personas = []) {
   const container = document.getElementById('timeline-container');
   if (!container) return;
   
-  showLoading(true, 'timeline-container');
+  showLoading(true, 'timeline-container', 'Preparando línea de tiempo...');
   
   try {
     // Obtener todos los datos precontractuales
@@ -956,6 +959,8 @@ async function renderTimelineGeneral(personas = []) {
   } catch (error) {
     console.error('Error renderizando timeline general:', error);
     container.innerHTML = '<div class="text-red-500 text-center py-8">Error al cargar el timeline</div>';
+  } finally {
+    showLoading(false, 'timeline-container');
   }
 }
 
@@ -1273,7 +1278,7 @@ async function handlePersonaSelection(event) {
   }
   
   try {
-    showLoading(true, 'timeline-container');
+  showLoading(true, 'timeline-container', 'Calculando detalles del candidato...');
     
     // Obtener timeline de la persona
     const response = await fetch(SCRIPT_URL, {
@@ -1414,29 +1419,35 @@ function renderPersonasTiempoExcesivo(personas = []) {
 /**
  * Muestra/oculta indicador de carga
  */
-function showLoading(show, containerId = null) {
-  if (containerId) {
-    const container = document.getElementById(containerId);
-    if (container && show) {
+let dashboardLoaderCount = 0;
+
+function showLoading(show, containerId = null, message) {
+  const container = containerId ? document.getElementById(containerId) : null;
+
+  if (container) {
+    if (show) {
+      container.dataset.loaderPlaceholder = 'true';
       container.innerHTML = '<div class="text-center py-4"><div class="inline-block animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div></div>';
+    } else if (container.dataset.loaderPlaceholder) {
+      delete container.dataset.loaderPlaceholder;
     }
     return;
   }
-  
-  const existing = document.getElementById('dashboard-loading');
-  if (show && !existing) {
-    const overlay = document.createElement('div');
-    overlay.id = 'dashboard-loading';
-    overlay.className = 'fixed inset-0 bg-black bg-opacity-20 flex items-center justify-center z-50';
-    overlay.innerHTML = `
-      <div class="bg-white p-6 rounded-lg shadow-lg flex items-center space-x-3">
-        <div class="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
-        <span>Cargando datos...</span>
-      </div>
-    `;
-    document.body.appendChild(overlay);
-  } else if (!show && existing) {
-    existing.remove();
+
+  const resolvedMessage = message || 'Cargando datos...';
+
+  if (show) {
+    dashboardLoaderCount += 1;
+    showLoader(resolvedMessage, 'blocking');
+    return;
+  }
+
+  if (dashboardLoaderCount > 0) {
+    dashboardLoaderCount -= 1;
+  }
+
+  if (dashboardLoaderCount === 0) {
+    hideLoader();
   }
 }
 

@@ -3,6 +3,7 @@ import { APP_CONFIG } from '../../../lib/config.js';
 import { initSidebar } from '../../../pages-scripts/sidebar.js';
 import { toast, openModal, closeModal } from '../../../lib/ui.js';
 import { simpleSearch } from '../../../lib/search.js';
+import { showLoaderDuring } from '../../../lib/loader.js';
 
 // Small debounce helper (module-scoped) to avoid depending on global legacy functions
 function debounce(fn, wait){ let t; return (...a)=>{ clearTimeout(t); t = setTimeout(()=>fn(...a), wait); }; }
@@ -68,10 +69,10 @@ class AdminComponentManager {
       throw new Error('Base URL not configured');
     }
 
-    try {
+    const executeRequest = async () => {
       console.debug('apiFetch ->', path, payload ? Object.assign({}, payload) : null);
       this.addApiLogEntry({ stage: 'request', path, payload });
-      
+
       const response = await fetch(APP_CONFIG.BASE_URL, {
         method: 'POST',
         headers: { 'Content-Type': 'text/plain' },
@@ -90,6 +91,11 @@ class AdminComponentManager {
       this.addApiLogEntry({ stage: 'response', path, payload, response: json });
       this.renderApiLogsPanel();
       return json;
+    };
+
+    try {
+      const message = `Procesando ${path}...`;
+      return await showLoaderDuring(executeRequest, message, 'blocking', 320);
     } catch (e) {
       console.error('apiFetch error', path, e);
       this.addApiLogEntry({ stage: 'error', path, payload, error: e.message });

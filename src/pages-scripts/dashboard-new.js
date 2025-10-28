@@ -1,203 +1,8 @@
-/**
- * @fileoverview Dashboard principal - Implementación actualizada
- * Conecta con Google Apps Script para obtener datos reales
- */
+// Este archivo quedó como alias histórico. Toda la lógica del dashboard
+// vive ahora en `dashboard.js`. Se conserva únicamente para evitar errores
+// en builds que todavía importen este archivo.
 
-import { getConfig } from '../lib/config.js';
-
-/** URL del script de Google Apps Script */
-let SCRIPT_URL = '';
-
-/** Cache para datos del dashboard */
-let dashboardCache = null;
-
-/**
- * Inicializa el dashboard al cargar la página
- */
-document.addEventListener('DOMContentLoaded', async function() {
-  try {
-    // Obtener configuración
-    const config = await getConfig();
-    SCRIPT_URL = config.SCRIPT_URL;
-    
-    // Cargar datos del dashboard
-    await loadDashboard();
-    
-    // Configurar actualizaciones automáticas cada 5 minutos
-    setInterval(loadDashboard, 5 * 60 * 1000);
-  } catch (error) {
-    console.error('Error inicializando dashboard:', error);
-    showError('Error al cargar el dashboard');
-  }
-});
-
-/**
- * Carga todos los datos del dashboard
- */
-async function loadDashboard() {
-  try {
-    showLoading(true);
-    
-    // Obtener datos del backend
-    const response = await fetch(SCRIPT_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        path: 'dashboardSummary',
-        payload: {}
-      })
-    });
-    
-    if (!response.ok) {
-      throw new Error(`HTTP ${response.status}`);
-    }
-    
-    const result = await response.json();
-    
-    if (!result.ok) {
-      throw new Error(result.error || 'Error desconocido');
-    }
-    
-    dashboardCache = result.data;
-    
-    // Renderizar todos los componentes
-    renderKPIs(dashboardCache);
-    renderAlertas(dashboardCache.alertas);
-    await renderPrecontractual(dashboardCache.precontractualResumen);
-    
-  } catch (error) {
-    console.error('Error cargando dashboard:', error);
-    showError('Error al cargar los datos del dashboard');
-  } finally {
-    showLoading(false);
-  }
-}
-
-/**
- * Renderiza los KPIs principales
- */
-function renderKPIs(data) {
-  // Contratistas activos
-  const contractorsEl = document.getElementById('contractors-count');
-  if (contractorsEl) {
-    contractorsEl.textContent = data.contratistasActivos || 0;
-  }
-  
-  // Contratos próximos a vencer
-  const expiringEl = document.getElementById('expiring-count');
-  if (expiringEl) {
-    expiringEl.textContent = data.contratosVencimiento?.count || 0;
-  }
-  
-  // Personas en proceso precontractual
-  const precontractualEl = document.getElementById('precontractual-count');
-  if (precontractualEl) {
-    precontractualEl.textContent = data.personasEnProceso?.count || 0;
-  }
-  
-  // Pagos del mes
-  const paymentsEl = document.getElementById('payments-amount');
-  if (paymentsEl) {
-    const pagos = data.pagosMes || {};
-    paymentsEl.textContent = formatCurrency(pagos.pagado || 0);
-  }
-}
-
-/**
- * Renderiza las alertas
- */
-function renderAlertas(alertas = []) {
-  const container = document.getElementById('alertsList');
-  if (!container) return;
-  
-  container.innerHTML = '';
-  
-  if (!alertas.length) {
-    container.innerHTML = '<div class="text-gray-500 text-center py-4">No hay alertas activas</div>';
-    return;
-  }
-  
-  alertas.forEach(alerta => {
-    const alertaEl = createAlertaElement(alerta);
-    container.appendChild(alertaEl);
-  });
-}
-
-/**
- * Crea un elemento de alerta
- */
-function createAlertaElement(alerta) {
-  const div = document.createElement('div');
-  
-  let bgColor = 'bg-gray-50';
-  let textColor = 'text-gray-800';
-  let iconColor = 'text-gray-500';
-  let icon = 'info';
-  
-  switch (alerta.tipo) {
-    case 'warning':
-      bgColor = 'bg-yellow-50';
-      textColor = 'text-yellow-800';
-      iconColor = 'text-yellow-500';
-      icon = 'warning';
-      break;
-    case 'error':
-      bgColor = 'bg-red-50';
-      textColor = 'text-red-800';
-      iconColor = 'text-red-500';
-      icon = 'error';
-      break;
-    case 'info':
-      bgColor = 'bg-blue-50';
-      textColor = 'text-blue-800';
-      iconColor = 'text-blue-500';
-      icon = 'info';
-      break;
-  }
-  
-  div.className = `flex items-start ${bgColor} p-4 rounded-lg`;
-  div.innerHTML = `
-    <span class="material-icons ${iconColor} mr-4 mt-1">${icon}</span>
-    <div>
-      <h4 class="font-semibold ${textColor}">${escapeHtml(alerta.titulo)}</h4>
-      <p class="text-sm ${textColor.replace('800', '600')}">${escapeHtml(alerta.mensaje)}</p>
-    </div>
-  `;
-  
-  return div;
-}
-
-/**
- * Renderiza la sección precontractual
- */
-async function renderPrecontractual(resumen) {
-  await renderPersonaSelector(resumen.personas);
-  renderPersonasTiempoExcesivo(resumen.personas);
-}
-
-/**
- * Renderiza el selector de personas
- */
-async function renderPersonaSelector(personas = []) {
-  const selector = document.getElementById('persona-selector');
-  if (!selector) return;
-  
-  // Limpiar opciones existentes
-  selector.innerHTML = '<option value="">Seleccionar persona...</option>';
-  
-  // Obtener nombres de personas
-  const personasConNombres = await enrichPersonasWithNames(personas);
-  
-  personasConNombres.forEach(persona => {
-    const option = document.createElement('option');
-    option.value = persona.persona_id;
-    option.textContent = `${persona.nombre} - ${persona.etapaActual}`;
-    selector.appendChild(option);
-  });
-  
-  // Agregar evento de cambio
-  selector.addEventListener('change', handlePersonaSelection);
-}
+console.warn('[dashboard-new] Usa ../pages-scripts/dashboard.js. Este archivo ya no contiene lógica.');
 
 /**
  * Enriquece las personas con sus nombres
@@ -244,7 +49,7 @@ async function handlePersonaSelection(event) {
   }
   
   try {
-    showLoading(true, 'timeline-container');
+  showLoading(true, 'timeline-container', 'Preparando línea de tiempo...');
     
     // Obtener timeline de la persona
     const response = await fetch(SCRIPT_URL, {
@@ -356,29 +161,43 @@ function renderPersonasTiempoExcesivo(personas = []) {
 /**
  * Muestra/oculta indicador de carga
  */
-function showLoading(show, containerId = null) {
-  if (containerId) {
-    const container = document.getElementById(containerId);
-    if (container && show) {
-      container.innerHTML = '<div class="text-center py-4"><div class="inline-block animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div></div>';
+const loaderState = new Map();
+
+function showLoading(show, containerId = null, message) {
+  const key = containerId || '__global__';
+  const current = loaderState.get(key) || 0;
+  const resolvedMessage = message || (containerId ? 'Procesando sección...' : 'Cargando datos...');
+
+  if (show) {
+    loaderState.set(key, current + 1);
+    const variant = containerId ? 'toast' : 'blocking';
+    showLoader(resolvedMessage, variant);
+
+    if (containerId) {
+      const container = document.getElementById(containerId);
+      if (container) {
+        container.dataset.loaderPlaceholder = 'true';
+        container.innerHTML = '<div class="text-center py-4"><div class="inline-block animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div></div>';
+      }
     }
     return;
   }
-  
-  const existing = document.getElementById('dashboard-loading');
-  if (show && !existing) {
-    const overlay = document.createElement('div');
-    overlay.id = 'dashboard-loading';
-    overlay.className = 'fixed inset-0 bg-black bg-opacity-20 flex items-center justify-center z-50';
-    overlay.innerHTML = `
-      <div class="bg-white p-6 rounded-lg shadow-lg flex items-center space-x-3">
-        <div class="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
-        <span>Cargando datos...</span>
-      </div>
-    `;
-    document.body.appendChild(overlay);
-  } else if (!show && existing) {
-    existing.remove();
+
+  if (!current) return;
+
+  if (current === 1) {
+    loaderState.delete(key);
+  } else {
+    loaderState.set(key, current - 1);
+  }
+
+  hideLoader();
+
+  if (containerId) {
+    const container = document.getElementById(containerId);
+    if (container && container.dataset.loaderPlaceholder) {
+      delete container.dataset.loaderPlaceholder;
+    }
   }
 }
 

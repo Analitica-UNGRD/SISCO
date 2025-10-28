@@ -1,5 +1,6 @@
 // Script para la página de contratistas (conectado con backend)
 import { initSidebar } from './sidebar.js';
+import { showLoaderDuring } from '../lib/loader.js';
 let contratosData = [];
 const obligacionesCache = new Map();
 let currentObligacionesContratoId = null;
@@ -7,103 +8,68 @@ let currentObligacionesContratoId = null;
 // Función para realizar peticiones al backend Apps Script
 async function fetchFromBackend(path, payload = {}) {
   try {
-    // Mostrar indicador de carga en las peticiones largas
-    const loadingTimeout = setTimeout(() => {
-      const loadingIndicator = document.createElement('div');
-      loadingIndicator.id = 'api-loading-indicator';
-      loadingIndicator.className = 'fixed bottom-4 right-4 bg-blue-600 text-white px-4 py-2 rounded-lg shadow-lg z-50 flex items-center';
-      loadingIndicator.innerHTML = `
-        <div class="animate-spin rounded-full h-4 w-4 border-2 border-white mr-2"></div>
-        <span>Conectando con el servidor...</span>
-      `;
-      document.body.appendChild(loadingIndicator);
-    }, 300); // Solo mostrar si tarda más de 300ms
-    
-    // Intentar varios endpoints en caso de que alguno falle
-    const apiUrls = [
-  '/api',                               // Preferir ruta relativa (Vercel serverless)
-  'http://localhost:3000/api',          // Servidor proxy local
-  'http://127.0.0.1:3000/api',          // Alternativa para localhost
-  window.location.origin + '/api-proxy' // Alternativa relativa a la raíz actual
-    ];
-    
-    let lastError = null;
-    let response = null;
-    
-    // Intentar cada URL hasta que una funcione
-    for (const apiUrl of apiUrls) {
-      try {
-        console.log(`Intentando conectar a: ${apiUrl}`);
-        response = await fetch(apiUrl, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            path,
-            payload
-          }),
-        });
-        
-        // Si la petición fue exitosa, salimos del bucle
-        if (response.ok) {
+    return await showLoaderDuring(async () => {
+      const apiUrls = [
+        '/api',
+        'http://localhost:3000/api',
+        'http://127.0.0.1:3000/api',
+        window.location.origin + '/api-proxy'
+      ];
+
+      let lastError = null;
+
+      for (const apiUrl of apiUrls) {
+        try {
+          console.log(`Intentando conectar a: ${apiUrl}`);
+          const response = await fetch(apiUrl, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ path, payload })
+          });
+
+          if (!response.ok) {
+            lastError = new Error(`Error HTTP: ${response.status} en ${apiUrl}`);
+            continue;
+          }
+
+          const raw = await response.text();
+          let data = null;
+          try {
+            data = raw ? JSON.parse(raw) : null;
+          } catch (parseErr) {
+            throw new Error(`Respuesta no válida de la API (${apiUrl})`);
+          }
+
+          if (!data || !data.ok) {
+            throw new Error((data && data.error) || 'Error desconocido en la API');
+          }
+
           console.log(`Conexión exitosa a: ${apiUrl}`);
-          break;
-        } else {
-          lastError = new Error(`Error HTTP: ${response.status} en ${apiUrl}`);
+          return data;
+        } catch (err) {
+          console.warn(`Fallo al conectar a ${apiUrl}:`, err);
+          lastError = err;
         }
-      } catch (err) {
-        console.warn(`Fallo al conectar a ${apiUrl}:`, err);
-        lastError = err;
-        // Continuamos con la siguiente URL
       }
-    }
-    
-    // Si no se pudo conectar a ninguna URL
-    if (!response || !response.ok) {
+
       throw lastError || new Error('No se pudo conectar a ningún endpoint');
-    }
-    
-    // Limpiar indicador de carga
-    clearTimeout(loadingTimeout);
-    const indicator = document.getElementById('api-loading-indicator');
-    if (indicator) {
-      document.body.removeChild(indicator);
-    }
-    
-    if (!response.ok) {
-      throw new Error(`Error HTTP: ${response.status}`);
-    }
-    
-    const data = await response.json();
-    if (!data.ok) {
-      throw new Error(data.error || 'Error desconocido en la API');
-    }
-    
-    return data;
+    }, 'Conectando con el servidor...', 'blocking', 350);
   } catch (error) {
     console.error('Error al realizar la petición al backend:', error);
-    
-    // Limpiar indicador de carga en caso de error
-    const indicator = document.getElementById('api-loading-indicator');
-    if (indicator) {
-      document.body.removeChild(indicator);
-    }
-    
-    // Mostrar mensaje de error
+
     const errorToast = document.createElement('div');
     errorToast.className = 'fixed bottom-4 left-4 bg-red-600 text-white px-4 py-2 rounded-lg shadow-lg z-50';
     errorToast.innerHTML = `Error: ${error.message}`;
     document.body.appendChild(errorToast);
-    
+
     setTimeout(() => {
       errorToast.style.opacity = '0';
       errorToast.style.transition = 'opacity 0.5s ease';
       setTimeout(() => {
-        try { document.body.removeChild(errorToast); } catch(e) {}
+        try { document.body.removeChild(errorToast); } catch (e) {}
       }, 500);
     }, 5000);
-    
+
     throw error;
   }
 }

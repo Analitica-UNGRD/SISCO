@@ -6,6 +6,7 @@
 
 import { Auth } from './auth.js';
 import { UI } from './ui.js';
+import { showLoader, hideLoader } from '../lib/loader.js';
 
 /**
  * Inicialización cuando el DOM está completamente cargado
@@ -18,6 +19,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     window.location.href = './login.html';
     return;
   }
+
+  showLoader('Cargando personas...', 'blocking');
 
   // Configurar evento del botón de regreso
   document.getElementById('backBtn').addEventListener('click', () => {
@@ -76,9 +79,11 @@ document.addEventListener('DOMContentLoaded', async () => {
     { id: '2', Nombre: 'Carlos Ruiz', Cedula: '87654321', email: 'carlos@example.com' }
   ];
 
-  // Simula carga con un pequeño retardo para mostrar comportamiento real
-  setTimeout(() => {
+  try {
+    await new Promise(resolve => setTimeout(resolve, 400));
     renderList(demo);
-  }, 400);
+  } finally {
+    hideLoader();
+  }
 
 });

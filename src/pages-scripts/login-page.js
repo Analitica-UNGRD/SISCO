@@ -173,7 +173,7 @@ class LoginPage {
             const result = await showLoaderDuring(
                 Auth.login(email, password),
                 'Verificando credenciales...',
-                'transparent',
+                'blocking',
                 1000
             );
 

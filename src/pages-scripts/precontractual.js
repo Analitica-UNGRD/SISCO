@@ -5,6 +5,7 @@
 
 import { Auth } from '../lib/auth.js';
 import { APP_CONFIG } from '../lib/config.js';
+import { showLoader, hideLoader } from '../lib/loader.js';
 
 const SPECIAL_EVENT_VARIANTS = [
     {
@@ -120,7 +121,7 @@ class PrecontractualManager {
     }
     
     async loadData() {
-        this.showLoading(true);
+    this.showLoading(true, 'Cargando procesos precontractuales...');
         
         try {
             // Intentar cargar datos reales
@@ -1239,17 +1240,23 @@ class PrecontractualManager {
         container.innerHTML = html || '<p class="text-gray-500">No hay datos para mostrar</p>';
     }
     
-    showLoading(show) {
+    showLoading(show, message = 'Cargando datos...') {
         const loading = document.getElementById('loading');
         if (show) {
-            loading.classList.remove('hidden');
+            showLoader(message, 'blocking');
+            if (loading) {
+                loading.classList.remove('hidden');
+            }
         } else {
-            loading.classList.add('hidden');
+            hideLoader();
+            if (loading) {
+                loading.classList.add('hidden');
+            }
         }
     }
     
     async loadSampleData() {
-        this.showLoading(true);
+    this.showLoading(true, 'Generando datos de prueba...');
         
         try {
             // Simular datos de prueba
