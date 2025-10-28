@@ -2,6 +2,7 @@
 import { APP_CONFIG } from '../../../lib/config.js';
 import { initSidebar } from '../../../pages-scripts/sidebar.js';
 import { toast, openModal, closeModal } from '../../../lib/ui.js';
+import { simpleSearch } from '../../../lib/search.js';
 
 // Small debounce helper (module-scoped) to avoid depending on global legacy functions
 function debounce(fn, wait){ let t; return (...a)=>{ clearTimeout(t); t = setTimeout(()=>fn(...a), wait); }; }
@@ -36,6 +37,11 @@ class AdminComponentManager {
   this.ctx = { persona: null, contrato: null, modificaciones: [] }; // Always start clean
     this.CTX_KEY = 'admin_ctx_v1';
     this.__apiLogs = [];
+    this._personasDataset = [];
+    this._filteredPersonas = [];
+    this._personasVisibleStep = 20;
+    this._personasVisibleLimit = this._personasVisibleStep;
+    this._personaDropdownOutsideClickHandler = null;
     
     // Clear any old test data
     try {
@@ -1317,16 +1323,31 @@ class AdminComponentManager {
           return true;
         });
   console.log('Personas encontradas (raw):', personas.length, 'filtered:', filtered.length);
-        this.populatePersonasDropdown(filtered);
+        this._personasDataset = filtered;
+        const searchInput = document.getElementById('ctxPersonaSearch');
+        const currentQuery = searchInput ? searchInput.value : '';
+        if (currentQuery && currentQuery.trim()) {
+          this.filterPersonasList(currentQuery);
+        } else {
+          this._filteredPersonas = [...filtered];
+          this._personasVisibleLimit = this._personasVisibleStep;
+          this.renderPersonasDropdown();
+        }
       } else {
   console.error('Error en la estructura de respuesta:', result);
   console.log('Expected: { ok: true, items: [...] }');
   console.log('Received:', result);
-        this.populatePersonasDropdown([]);
+        this._personasDataset = [];
+        this._filteredPersonas = [];
+        this._personasVisibleLimit = this._personasVisibleStep;
+        this.renderPersonasDropdown();
       }
     } catch (error) {
   console.error('Error de red/conexión loading personas:', error);
-      this.populatePersonasDropdown([]);
+      this._personasDataset = [];
+      this._filteredPersonas = [];
+      this._personasVisibleLimit = this._personasVisibleStep;
+      this.renderPersonasDropdown();
     }
   }
 
@@ -1382,26 +1403,104 @@ class AdminComponentManager {
     }
   }
 
+  renderPersonasDropdown() {
+    const personasToRender = Array.isArray(this._filteredPersonas)
+      ? this._filteredPersonas.slice(0, this._personasVisibleLimit)
+      : [];
+    this.updatePersonaCount();
+    this.populatePersonasDropdown(personasToRender);
+    this.updateLoadMoreState();
+  }
+
+  updatePersonaCount() {
+    const personaCount = document.getElementById('ctxPersonaCount');
+    if (!personaCount) return;
+    const total = Array.isArray(this._filteredPersonas) ? this._filteredPersonas.length : 0;
+    if (!total) {
+      personaCount.textContent = 'Sin resultados';
+      return;
+    }
+    personaCount.textContent = total === 1 ? '1 persona' : `${total} personas`;
+  }
+
+  updateLoadMoreState() {
+    const loadMoreButton = document.getElementById('ctxPersonaLoadMore');
+    if (!loadMoreButton) return;
+    const hasMore = Array.isArray(this._filteredPersonas) && this._filteredPersonas.length > this._personasVisibleLimit;
+    if (hasMore) {
+      loadMoreButton.classList.remove('hidden');
+      loadMoreButton.disabled = false;
+    } else {
+      loadMoreButton.classList.add('hidden');
+      loadMoreButton.disabled = true;
+    }
+  }
+
+  findPersonaById(personaId) {
+    if (!personaId) return null;
+    if (personaId.startsWith('idx-')) {
+      const idx = Number(personaId.slice(4));
+      if (!Number.isNaN(idx) && Array.isArray(this._filteredPersonas) && this._filteredPersonas[idx]) {
+        return this._filteredPersonas[idx];
+      }
+    }
+    const dataset = Array.isArray(this._personasDataset) ? this._personasDataset : [];
+    return dataset.find(p => {
+      const possibleIds = [p.persona_id, p.id, p.ID, p.rowIndex];
+      return possibleIds.some(val => val !== undefined && val !== null && val.toString() === personaId);
+    }) || null;
+  }
+
+  filterPersonasList(query) {
+    const dataset = Array.isArray(this._personasDataset) ? this._personasDataset : [];
+    const trimmed = (query || '').trim();
+    if (!dataset.length) {
+      this._filteredPersonas = [];
+      this._personasVisibleLimit = this._personasVisibleStep;
+      this.renderPersonasDropdown();
+      return;
+    }
+    if (!trimmed) {
+      this._filteredPersonas = [...dataset];
+    } else {
+      this._filteredPersonas = simpleSearch(trimmed, dataset, {
+        fields: ['nombre', 'Nombre', 'identificacion', 'Identificacion', 'persona_id', 'personaId', 'correo', 'email']
+      });
+    }
+    this._personasVisibleLimit = this._personasVisibleStep;
+    this.renderPersonasDropdown();
+  }
+
+  loadMorePersonas() {
+    if (!Array.isArray(this._filteredPersonas) || !this._filteredPersonas.length) {
+      this.updateLoadMoreState();
+      return;
+    }
+    this._personasVisibleLimit += this._personasVisibleStep;
+    this.renderPersonasDropdown();
+  }
+
   // Populate personas dropdown
   populatePersonasDropdown(personas) {
   console.log('populatePersonasDropdown called with:', personas.length, 'personas');
     
     const personaDropdown = document.getElementById('ctxPersonaToggle');
     const personaList = document.getElementById('ctxPersonaList');
-    const personaCount = document.getElementById('ctxPersonaCount');
-    
-    if (personaCount) {
-      personaCount.textContent = `${personas.length} personas`;
-    }
     
     if (personaList) {
-      personaList.innerHTML = personas.map((persona, index) => {
+      if (!personas.length) {
+        personaList.innerHTML = '<div class="p-2 text-sm text-gray-500">Sin resultados</div>';
+      } else {
+    personaList.innerHTML = personas.map((persona, index) => {
   console.log(`Persona ${index}:`, JSON.stringify(persona, null, 2));
         
         // Try different possible field names
         const nombre = persona.nombre || persona.Nombre || persona.name || persona.Name || 'Sin nombre';
         const identificacion = persona.identificacion || persona.Identificacion || persona.id || persona.ID || persona.documento || 'Sin ID';
-        const personaId = persona.persona_id || persona.id || persona.ID || persona.rowIndex || index;
+    const primaryId = persona.persona_id || persona.id || persona.ID || persona.rowIndex;
+    const filteredIndex = Array.isArray(this._filteredPersonas) ? this._filteredPersonas.indexOf(persona) : index;
+    const personaKeyBase = (primaryId !== undefined && primaryId !== null) ? primaryId : `idx-${filteredIndex >= 0 ? filteredIndex : index}`;
+    const personaId = personaKeyBase.toString();
         
   console.log(`Procesando: nombre="${nombre}", identificacion="${identificacion}", personaId="${personaId}"`);
         
@@ -1412,6 +1511,7 @@ class AdminComponentManager {
           </div>
         `;
       }).join('');
+      }
       
       // Add click handlers (ensure single-click selection: stopPropagation and close dropdown afterwards)
       personaList.querySelectorAll('.persona-item').forEach(item => {
@@ -1419,11 +1519,7 @@ class AdminComponentManager {
           try {
             e.stopPropagation();
             const personaId = item.dataset.personaId;
-            const persona = personas.find(p => 
-              (p.persona_id && p.persona_id.toString() === personaId) || 
-              (p.id && p.id.toString() === personaId) ||
-              (p.ID && p.ID.toString() === personaId)
-            );
+            const persona = this.findPersonaById(personaId);
             if (persona) {
               console.log('Persona seleccionada (click handler):', persona);
               // Set global suppression to avoid stray clears from other listeners/tests
@@ -1471,12 +1567,16 @@ class AdminComponentManager {
         }
       });
       
-      // Close dropdown when clicking outside
-      document.addEventListener('click', (e) => {
+      // Close dropdown when clicking outside (remove old handler to avoid duplicates)
+      if (this._personaDropdownOutsideClickHandler) {
+        document.removeEventListener('click', this._personaDropdownOutsideClickHandler);
+      }
+      this._personaDropdownOutsideClickHandler = (e) => {
         if (dropdown && !newPersonaDropdown.contains(e.target) && !dropdown.contains(e.target)) {
           dropdown.classList.add('hidden');
         }
-      });
+      };
+      document.addEventListener('click', this._personaDropdownOutsideClickHandler);
     }
   }
 

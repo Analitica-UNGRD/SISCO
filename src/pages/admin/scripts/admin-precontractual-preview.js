@@ -414,6 +414,7 @@ export default class AdminPrecontractualPreview {
     const latestVariant = latestEvent ? getVariantForEvent(latestEvent.Evento) : null;
 
     const blocks = [];
+    let globalSequence = 0;
 
     phaseLabels.forEach((label, index) => {
       const normalizedLabel = String(label || '').trim();
@@ -423,34 +424,37 @@ export default class AdminPrecontractualPreview {
 
       const phaseEvents = events.filter(evt => String(evt.Fase || '').trim() === normalizedLabel);
       const { baseEvents, variantBuckets } = this.partitionPhaseEvents(phaseEvents);
-      const baseLatestEvent = baseEvents.length
-        ? baseEvents[baseEvents.length - 1]
-        : (phaseEvents.length ? phaseEvents[phaseEvents.length - 1] : null);
-
-      const baseDate = baseLatestEvent ? new Date(baseLatestEvent.Fecha) : null;
       const earliestPhaseDate = this.getEarliestDateFromEvents(phaseEvents);
-      const baseStatus = this.determinePhaseStatus(baseEvents, phaseEvents.length ? 'En proceso' : 'Pendiente');
 
-      // Base block (even if no base events, to keep context)
-      blocks.push({
-        label: normalizedLabel,
-        displayLabel: normalizedLabel,
-        status: baseStatus,
-        current: normalizedLabel === currentPhaseLabel && !latestVariant,
-        count: baseEvents.length,
-        events: baseEvents,
-        date: baseDate,
-        corrections: (variantBuckets.get('correccion') || []).length,
-        variantKey: null,
-        variantBadge: null,
-        variantClass: null,
-        baseLabel: normalizedLabel,
-        alertText: '',
-        orderIndex: index * 10,
-        hasVariants: variantBuckets.size > 0,
-        sortDate: earliestPhaseDate ? earliestPhaseDate.getTime() : Number.POSITIVE_INFINITY,
-        firstEventDate: earliestPhaseDate
-      });
+      // Render one block per base event so repeated fases appear varias veces
+      if (baseEvents.length) {
+        baseEvents.forEach((evt) => {
+          const eventDate = evt && evt.Fecha ? new Date(evt.Fecha) : null;
+          blocks.push({
+            label: normalizedLabel,
+            displayLabel: normalizedLabel,
+            status: this.determinePhaseStatus([evt], phaseEvents.length ? 'En proceso' : 'Pendiente'),
+            current: latestEvent === evt && !latestVariant,
+            count: 1,
+            events: baseEvents,
+            date: eventDate,
+            corrections: (variantBuckets.get('correccion') || []).length,
+            variantKey: null,
+            variantBadge: null,
+            variantClass: null,
+            baseLabel: normalizedLabel,
+            alertText: '',
+            orderIndex: index * 100 + globalSequence,
+            hasVariants: variantBuckets.size > 0,
+            sortDate: eventDate
+              ? eventDate.getTime()
+              : (earliestPhaseDate ? earliestPhaseDate.getTime() : Number.POSITIVE_INFINITY),
+            firstEventDate: earliestPhaseDate,
+            primaryEvent: evt
+          });
+          globalSequence += 1;
+        });
+      }
 
       // Variant blocks (corrección, subsanación, ajuste, etc.)
       variantBuckets.forEach((variantEvents, variantKey) => {
@@ -463,29 +467,34 @@ export default class AdminPrecontractualPreview {
           return;
         }
 
-        const variantLatest = variantEvents[variantEvents.length - 1];
-        const variantDate = variantLatest ? new Date(variantLatest.Fecha) : null;
         const variantEarliest = this.getEarliestDateFromEvents(variantEvents);
-        blocks.push({
-          label: normalizedLabel,
-          displayLabel: `${normalizedLabel} · ${variantConfig.displayLabel}`,
-          status: this.determinePhaseStatus(variantEvents, 'En proceso'),
-          current: normalizedLabel === currentPhaseLabel && !!latestVariant && latestVariant.key === variantKey,
-          count: variantEvents.length,
-          events: variantEvents,
-          date: variantDate,
-          corrections: variantKey === 'correccion' ? variantEvents.length : 0,
-          variantKey,
-          variantBadge: variantConfig.badge,
-          variantClass: variantConfig.className,
-          baseLabel: normalizedLabel,
-          alertText: variantConfig.badge,
-          orderIndex: index * 10 + 1,
-          hasVariants: false,
-          sortDate: variantEarliest
-            ? variantEarliest.getTime()
-            : (earliestPhaseDate ? earliestPhaseDate.getTime() : Number.POSITIVE_INFINITY),
-          firstEventDate: variantEarliest || earliestPhaseDate
+        variantEvents.forEach((evt) => {
+          const eventDate = evt && evt.Fecha ? new Date(evt.Fecha) : null;
+          blocks.push({
+            label: normalizedLabel,
+            displayLabel: `${normalizedLabel} · ${variantConfig.displayLabel}`,
+            status: this.determinePhaseStatus([evt], 'En proceso'),
+            current: latestEvent === evt && !!latestVariant && latestVariant.key === variantKey,
+            count: 1,
+            events: variantEvents,
+            date: eventDate,
+            corrections: variantKey === 'correccion' ? 1 : 0,
+            variantKey,
+            variantBadge: variantConfig.badge,
+            variantClass: variantConfig.className,
+            baseLabel: normalizedLabel,
+            alertText: variantConfig.badge,
+            orderIndex: index * 100 + globalSequence,
+            hasVariants: false,
+            sortDate: eventDate
+              ? eventDate.getTime()
+              : (variantEarliest
+                  ? variantEarliest.getTime()
+                  : (earliestPhaseDate ? earliestPhaseDate.getTime() : Number.POSITIVE_INFINITY)),
+            firstEventDate: variantEarliest || earliestPhaseDate,
+            primaryEvent: evt
+          });
+          globalSequence += 1;
         });
       });
     });

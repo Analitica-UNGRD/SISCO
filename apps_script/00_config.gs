@@ -4,9 +4,9 @@ var CONFIG = {
   SHEETS: {
     PERSONAS: 'Personas',
     CONTRATOS: 'Contratos',
-  PAGOS: 'Pagos',
-  OBLIGACIONES: 'Obligaciones',
-  MODIFICACIONES: 'Modificaciones',
+    PAGOS: 'Pagos',
+    OBLIGACIONES: 'Obligaciones',
+    MODIFICACIONES: 'Modificaciones',
     PRECONTRACTUAL: 'Precontractual',
     ROLES: 'Roles',
     PRE_CATALOGO: 'PRE_CATALOGO'
