@@ -1,20 +1,12 @@
-function normalizeString(value) {
-  if (value === undefined || value === null) return '';
-  return String(value)
-    .toLowerCase()
-    .normalize('NFD')
-    .replace(/\p{Diacritic}/gu, '');
-}
-
 export function simpleSearch(query, dataset, options = {}) {
   if (!query || !query.trim()) return dataset;
-  const q = normalizeString(query.trim());
+  const q = query.trim().toLowerCase();
   const fields = options.fields || ['persona_id', 'Nombre', 'nombre', 'contrato_id', 'email'];
 
   return dataset.filter(item => {
     try {
       for (const f of fields) {
-        const val = normalizeString(item[f]);
+        const val = (item[f] !== undefined && item[f] !== null) ? String(item[f]).toLowerCase() : '';
         if (val.includes(q)) return true;
       }
     } catch (e) { /* ignore and continue */ }

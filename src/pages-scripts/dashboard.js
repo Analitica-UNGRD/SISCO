@@ -6,7 +6,6 @@
 import { getConfig } from '../lib/config.js';
 import { simpleSearch, globalSearch } from '../lib/search.js';
 import { showLoader, hideLoader } from '../lib/loader.js';
-import { stripLeadingNumber } from '../lib/ui.js';
 
 /** URL del script de Google Apps Script */
 let SCRIPT_URL = '';
@@ -161,8 +160,6 @@ function renderFilteredVistaResumida(filteredCandidatos) {
     if (etapaActual && etapaActual.eventos && etapaActual.eventos.length > 0) {
       const eventoMasReciente = etapaActual.eventos[etapaActual.eventos.length - 1];
       faseActual = eventoMasReciente.Fase || 'Sin fase';
-      // Mostrar sin el número inicial
-      faseActual = stripLeadingNumber(faseActual);
     }
 
     const etapasFinalizadas = candidato.etapas.filter(e => e.estado === 'Finalizado').length;
@@ -178,7 +175,7 @@ function renderFilteredVistaResumida(filteredCandidatos) {
           <div>
             <h4 class="font-semibold text-gray-900 transition-colors duration-200">${escapeHtml(candidato.nombre)}</h4>
             <p class="text-sm text-gray-600 transition-colors duration-200">
-              <span class="font-medium">${escapeHtml(stripLeadingNumber(etapaActual?.etapa || 'Sin etapa'))}</span>
+              <span class="font-medium">${escapeHtml(etapaActual?.etapa || 'Sin etapa')}</span>
               ${faseActual !== 'Sin fase' ? ` - ${escapeHtml(faseActual)}` : ''}
             </p>
             ${proximoActa ? '<span class="text-xs bg-green-100 text-green-700 px-2 py-1 rounded-full transition-all duration-200 hover:bg-green-200">Próximo a finalizar</span>' : ''}
@@ -591,12 +588,11 @@ async function renderVistaResumida() {
       const etapaActual = candidato.etapas[candidato.etapas.length - 1];
       const estadoColor = candidato.estadoGeneral === 'Finalizado' ? 'text-green-600' : 'text-blue-600';
       
-      // Buscar la fase más reciente de la etapa actual (para mostrar sin número)
+      // Buscar la fase más reciente de la etapa actual
       let faseActual = 'Sin fase';
       if (etapaActual && etapaActual.eventos && etapaActual.eventos.length > 0) {
         const eventoMasReciente = etapaActual.eventos[etapaActual.eventos.length - 1];
         faseActual = eventoMasReciente.Fase || 'Sin fase';
-        faseActual = stripLeadingNumber(faseActual);
       }
       
       // Determinar si está próximo a finalizar basándose en etapas completadas y estado
@@ -613,7 +609,7 @@ async function renderVistaResumida() {
             <div>
               <h4 class="font-semibold text-gray-900 transition-colors duration-200">${escapeHtml(candidato.nombre)}</h4>
               <p class="text-sm text-gray-600 transition-colors duration-200">
-                <span class="font-medium">${escapeHtml(stripLeadingNumber(etapaActual?.etapa || 'Sin etapa'))}</span>
+                <span class="font-medium">${escapeHtml(etapaActual?.etapa || 'Sin etapa')}</span>
                 ${faseActual !== 'Sin fase' ? ` - ${escapeHtml(faseActual)}` : ''}
               </p>
               ${proximoActa ? '<span class="text-xs bg-green-100 text-green-700 px-2 py-1 rounded-full transition-all duration-200 hover:bg-green-200">Próximo a finalizar</span>' : ''}
@@ -1227,9 +1223,9 @@ async function renderPersonaSelector(personas = []) {
   const personasConNombres = await enrichPersonasWithNames(personas);
   
   personasConNombres.forEach(persona => {
-  const option = document.createElement('option');
-  option.value = persona.persona_id;
-  option.textContent = `${persona.nombre} - ${stripLeadingNumber(persona.etapaActual || '')}`;
+    const option = document.createElement('option');
+    option.value = persona.persona_id;
+    option.textContent = `${persona.nombre} - ${persona.etapaActual}`;
     selector.appendChild(option);
   });
   
@@ -1333,8 +1329,8 @@ function renderTimeline(container, eventos) {
           ${!isLast ? '<div class="w-0.5 h-8 bg-gray-300 mt-2"></div>' : ''}
         </div>
         <div class="flex-1 pb-4">
-          <h4 class="font-semibold text-gray-800">${escapeHtml(stripLeadingNumber(evento.Etapa || ''))}</h4>
-          <p class="text-sm text-gray-600">${escapeHtml(stripLeadingNumber(evento.Fase || ''))}</p>
+          <h4 class="font-semibold text-gray-800">${escapeHtml(evento.Etapa || '')}</h4>
+          <p class="text-sm text-gray-600">${escapeHtml(evento.Fase || '')}</p>
           <p class="text-xs text-gray-500 mt-1">
             ${formatDate(evento.Fecha_evento)} - 
             <span class="capitalize ${isCompleted ? 'text-green-600' : 'text-yellow-600'}">
@@ -1405,8 +1401,8 @@ function renderPersonasTiempoExcesivo(personas = []) {
           <div>
             <span class="font-medium text-gray-900">${escapeHtml(persona.nombre || 'Nombre no disponible')}</span>
             <p class="text-xs text-gray-600">
-              <span class="font-medium">${escapeHtml(stripLeadingNumber(persona.etapaActual))}</span>
-              ${persona.faseActual !== 'Sin fase' ? ` - ${escapeHtml(stripLeadingNumber(persona.faseActual))}` : ''}
+              <span class="font-medium">${escapeHtml(persona.etapaActual)}</span>
+              ${persona.faseActual !== 'Sin fase' ? ` - ${escapeHtml(persona.faseActual)}` : ''}
             </p>
           </div>
         </div>

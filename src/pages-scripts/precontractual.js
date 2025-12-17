@@ -6,7 +6,6 @@
 import { Auth } from '../lib/auth.js';
 import { APP_CONFIG } from '../lib/config.js';
 import { showLoader, hideLoader } from '../lib/loader.js';
-import { stripLeadingNumber } from '../lib/ui.js';
 
 const SPECIAL_EVENT_VARIANTS = [
     {
@@ -43,103 +42,6 @@ const FINALIZING_EVENT_KEYWORDS = [
     'cierre de etapa'
 ].map(normalizeEventName);
 
-const RESPONSABLE_GROUPS = {
-    'Jefe': 'OAPI',
-    'Abogada': 'OAPI',
-    'Secretaría General y Contratación': 'Secretaría General y Contratación',
-    'GAFC': 'GAFC',
-    'Talento Humano': 'Talento Humano',
-    'Fiduprevisora': 'Fiduprevisora',
-    'Contratista': 'Contratista',
-    'Sin responsable asignado': 'Sin asignar'
-};
-
-const GROUP_COLORS = {
-    'OAPI': '#2563eb',
-    'Secretaría General y Contratación': '#0ea5e9',
-    'GAFC': '#f59e0b',
-    'Talento Humano': '#10b981',
-    'Fiduprevisora': '#8b5cf6',
-    'Contratista': '#ef4444',
-    'Sin asignar': '#6b7280'
-};
-
-const PHASE_RESPONSABLES = [
-    // Creación
-    { etapa: 'Creacion', fase: 10, responsable: 'Jefe' },
-    { etapa: 'Creacion', fase: 20, responsable: 'Jefe' },
-    { etapa: 'Creacion', fase: 30, responsable: 'Jefe' },
-    { etapa: 'Creacion', fase: 40, responsable: 'Sin responsable asignado' },
-    { etapa: 'Creacion', fase: 50, responsable: 'Sin responsable asignado' },
-    { etapa: 'Creacion', fase: 55, responsable: 'Jefe' },
-    { etapa: 'Creacion', fase: 60, responsable: 'Sin responsable asignado' },
-
-    // Solicitud CDP
-    { etapa: 'Solicitud CDP', fase: 10, responsable: 'Sin responsable asignado' },
-    { etapa: 'Solicitud CDP', fase: 20, responsable: 'Jefe' },
-    { etapa: 'Solicitud CDP', fase: 30, responsable: 'Jefe' },
-    { etapa: 'Solicitud CDP', fase: 40, responsable: 'Jefe' },
-    { etapa: 'Solicitud CDP', fase: 50, responsable: 'Jefe' },
-    { etapa: 'Solicitud CDP', fase: 60, responsable: 'Secretaría General y Contratación' },
-    { etapa: 'Solicitud CDP', fase: 70, responsable: 'Secretaría General y Contratación' },
-    { etapa: 'Solicitud CDP', fase: 80, responsable: 'GAFC' },
-    { etapa: 'Solicitud CDP', fase: 90, responsable: 'GAFC' },
-    { etapa: 'Solicitud CDP', fase: 100, responsable: 'Talento Humano' },
-    { etapa: 'Solicitud CDP', fase: 110, responsable: 'Talento Humano' },
-
-    // SIGEP (fases compartidas con contratista)
-    { etapa: 'SIGEP', fase: 10, responsable: 'Secretaría General y Contratación' },
-    { etapa: 'SIGEP', fase: 20, responsable: 'Secretaría General y Contratación / Contratista' },
-    { etapa: 'SIGEP', fase: 30, responsable: 'Secretaría General y Contratación / Contratista' },
-    { etapa: 'SIGEP', fase: 40, responsable: 'Secretaría General y Contratación / Contratista' },
-    { etapa: 'SIGEP', fase: 50, responsable: 'Secretaría General y Contratación / Contratista' },
-    { etapa: 'SIGEP', fase: 60, responsable: 'Secretaría General y Contratación' },
-
-    // Exámenes Médicos (fases compartidas con contratista)
-    { etapa: 'Examenes Medicos', fase: 10, responsable: 'Talento Humano / Contratista' },
-    { etapa: 'Examenes Medicos', fase: 20, responsable: 'Talento Humano / Contratista' },
-    { etapa: 'Examenes Medicos', fase: 30, responsable: 'Talento Humano / Contratista' },
-    { etapa: 'Examenes Medicos', fase: 40, responsable: 'Talento Humano' },
-
-    // Revisión
-    { etapa: 'Revision', fase: 10, responsable: 'Abogada' },
-    { etapa: 'Revision', fase: 20, responsable: 'Abogada' },
-    { etapa: 'Revision', fase: 30, responsable: 'Contratista' },
-    { etapa: 'Revision', fase: 40, responsable: 'Abogada' },
-    { etapa: 'Revision', fase: 45, responsable: 'Jefe' },
-    { etapa: 'Revision', fase: 50, responsable: 'Abogada' },
-    { etapa: 'Revision', fase: 60, responsable: 'Abogada' },
-
-    // Fiduprevisora
-    { etapa: 'Fiduprevisora', fase: 10, responsable: 'Fiduprevisora' },
-    { etapa: 'Fiduprevisora', fase: 20, responsable: 'Fiduprevisora' },
-    { etapa: 'Fiduprevisora', fase: 30, responsable: 'Fiduprevisora' },
-    { etapa: 'Fiduprevisora', fase: 40, responsable: 'Fiduprevisora' },
-    { etapa: 'Fiduprevisora', fase: 50, responsable: 'Fiduprevisora' },
-    { etapa: 'Fiduprevisora', fase: 60, responsable: 'Fiduprevisora' },
-    { etapa: 'Fiduprevisora', fase: 70, responsable: 'Fiduprevisora' },
-    { etapa: 'Fiduprevisora', fase: 80, responsable: 'Fiduprevisora' },
-    { etapa: 'Fiduprevisora', fase: 90, responsable: 'Fiduprevisora' },
-    { etapa: 'Fiduprevisora', fase: 100, responsable: 'Fiduprevisora' },
-    { etapa: 'Fiduprevisora', fase: 110, responsable: 'Fiduprevisora' },
-    { etapa: 'Fiduprevisora', fase: 120, responsable: 'Fiduprevisora' },
-
-    // GGC – Registro Presupuestal
-    { etapa: 'GGC-Registro Presupuestal', fase: 10, responsable: 'Sin responsable asignado' },
-    { etapa: 'GGC-Registro Presupuestal', fase: 20, responsable: 'Sin responsable asignado' },
-    { etapa: 'GGC-Registro Presupuestal', fase: 30, responsable: 'Sin responsable asignado' },
-
-    // Acta de Inicio y Designación de Supervisión
-    { etapa: 'Acta de Inicio y Designacion de Supervision', fase: 10, responsable: 'Sin responsable asignado' },
-    { etapa: 'Acta de Inicio y Designacion de Supervision', fase: 20, responsable: 'Sin responsable asignado' },
-    { etapa: 'Acta de Inicio y Designacion de Supervision', fase: 30, responsable: 'Sin responsable asignado' },
-    { etapa: 'Acta de Inicio y Designacion de Supervision', fase: 40, responsable: 'Sin responsable asignado' },
-    { etapa: 'Acta de Inicio y Designacion de Supervision', fase: 50, responsable: 'Jefe' },
-    { etapa: 'Acta de Inicio y Designacion de Supervision', fase: 60, responsable: 'Sin responsable asignado' }
-];
-
-const RESPONSABLE_LOOKUP = buildPhaseResponsableLookup(PHASE_RESPONSABLES);
-
 function normalizeEventName(name) {
     return (name || '')
         .toString()
@@ -157,77 +59,6 @@ SPECIAL_EVENT_VARIANTS.forEach(variant => {
 
 function getVariantForEvent(eventName) {
     return SPECIAL_EVENT_LOOKUP.get(normalizeEventName(eventName)) || null;
-}
-
-function normalizeEtapaKey(name = '') {
-    return normalizeEventName(name)
-        .replace(/[^a-z0-9]/gi, '')
-        .trim();
-}
-
-function extractPhaseNumber(faseLabel) {
-    if (faseLabel === null || faseLabel === undefined) return NaN;
-    if (typeof faseLabel === 'number') return Number(faseLabel);
-    const match = String(faseLabel).trim().match(/^(\d+)/);
-    return match ? Number(match[1]) : NaN;
-}
-
-function parseResponsablesList(responsable = '') {
-    return String(responsable || '')
-        .split('/')
-        .map(r => r.trim())
-        .filter(Boolean);
-}
-
-function resolveResponsableGroup(responsable = '') {
-    const responsables = parseResponsablesList(responsable);
-    const primary = responsables[0] || '';
-    return RESPONSABLE_GROUPS[primary] || 'Sin asignar';
-}
-
-function resolveResponsableGroups(responsable = '') {
-    const responsables = Array.isArray(responsable) ? responsable : parseResponsablesList(responsable);
-    const grupos = responsables.map(r => RESPONSABLE_GROUPS[r] || 'Sin asignar');
-    return [...new Set(grupos.length ? grupos : ['Sin asignar'])];
-}
-
-function buildPhaseResponsableLookup(items = []) {
-    const map = new Map();
-    items.forEach(item => {
-        const key = `${normalizeEtapaKey(item.etapa)}#${item.fase}`;
-        const responsables = parseResponsablesList(item.responsable);
-        const grupos = resolveResponsableGroups(responsables);
-        map.set(key, {
-            responsable: responsables[0] || 'Sin responsable asignado',
-            grupo: grupos[0] || 'Sin asignar',
-            responsables: responsables.length ? responsables : ['Sin responsable asignado'],
-            grupos: grupos.length ? grupos : ['Sin asignar']
-        });
-    });
-    return map;
-}
-
-function getPhaseResponsible(etapaNombre, faseLabel) {
-    const numero = extractPhaseNumber(faseLabel);
-    if (Number.isNaN(numero)) {
-        return {
-            responsable: 'Sin responsable asignado',
-            grupo: 'Sin asignar',
-            responsables: ['Sin responsable asignado'],
-            grupos: ['Sin asignar']
-        };
-    }
-    const key = `${normalizeEtapaKey(etapaNombre)}#${numero}`;
-    return RESPONSABLE_LOOKUP.get(key) || {
-        responsable: 'Sin responsable asignado',
-        grupo: 'Sin asignar',
-        responsables: ['Sin responsable asignado'],
-        grupos: ['Sin asignar']
-    };
-}
-
-function getGroupColor(nombreGrupo) {
-    return GROUP_COLORS[nombreGrupo] || GROUP_COLORS['Sin asignar'];
 }
 
 function isFinalizingEvent(eventName = '') {
@@ -285,8 +116,8 @@ class PrecontractualManager {
         // Refresh button
         document.getElementById('refreshData').addEventListener('click', () => this.loadData());
         
-        // Clear filters button
-        document.getElementById('clearFilters').addEventListener('click', () => this.clearFilters());
+        // Sample data button
+        document.getElementById('loadSampleData').addEventListener('click', () => this.loadSampleData());
     }
     
     async loadData() {
@@ -344,10 +175,50 @@ class PrecontractualManager {
             
         } catch (error) {
             console.error('Error loading data:', error);
-            this.showError('Error al cargar los datos');
+            
+            // Si no hay datos reales, mostrar opción de usar datos de prueba
+            if (this.data.length === 0) {
+                this.showNoDataMessage();
+            } else {
+                this.showError('Error al cargar los datos');
+            }
         } finally {
             this.showLoading(false);
         }
+    }
+    
+    showNoDataMessage() {
+        const container = document.querySelector('main .max-w-7xl');
+        const noDataDiv = document.createElement('div');
+        noDataDiv.id = 'no-data-message';
+        noDataDiv.className = 'bg-yellow-50 border border-yellow-200 rounded-lg p-6 mb-6';
+        noDataDiv.innerHTML = `
+            <div class="flex items-center">
+                <span class="material-icons text-yellow-600 mr-3">info</span>
+                <div class="flex-1">
+                    <h3 class="text-lg font-medium text-yellow-800">No hay datos precontractuales disponibles</h3>
+                    <p class="text-yellow-700 mt-1">
+                        No se encontraron datos en el sistema. Puedes usar datos de prueba para explorar la funcionalidad
+                        o verificar que el servidor esté configurado correctamente.
+                    </p>
+                </div>
+                <button id="loadSampleDataInline" class="bg-yellow-600 text-white px-4 py-2 rounded hover:bg-yellow-700 ml-4">
+                    Cargar datos de prueba
+                </button>
+            </div>
+        `;
+        
+        // Insertar después del header
+        const header = container.querySelector('.mb-6');
+        header.parentNode.insertBefore(noDataDiv, header.nextSibling);
+        
+        // Agregar event listener
+        document.getElementById('loadSampleDataInline').addEventListener('click', () => {
+            // Remover mensaje
+            noDataDiv.remove();
+            // Cargar datos de prueba
+            this.loadSampleData();
+        });
     }
     
     async fetchPrecontractualData() {
@@ -472,9 +343,6 @@ class PrecontractualManager {
                 candidato.etapas.push(etapa);
                 candidato.tiempoTotal += etapa.duracionDias;
             });
-
-            candidato.tiempoPorGrupo = this.aggregateGroupTotals(candidato.etapas, 'tiempoPorGrupo');
-            candidato.tiempoPorGrupoVisible = this.aggregateGroupTotals(candidato.etapas, 'tiempoPorGrupoVisible');
             
             // Determinar estado general
             const todasFinalizadas = candidato.etapas.every(e => e.estado === 'Finalizado');
@@ -494,7 +362,6 @@ class PrecontractualManager {
 
         const variantCounters = this.countVariantOccurrences(eventosOrdenados);
         const phaseBlocks = this.buildPhaseBlocks(eventosOrdenados);
-        const responsabilidad = this.computeResponsableDurations(eventosOrdenados, etapaData.etapa);
 
         const fechasEtapa = eventosOrdenados.map(e => new Date(e.Fecha));
         const fechaInicio = fechasEtapa.length > 0 ? new Date(Math.min(...fechasEtapa)) : null;
@@ -530,10 +397,7 @@ class PrecontractualManager {
             intento: maxIntento,
             correcciones: variantCounters.correccion || 0,
             specialVariantCounters: variantCounters,
-            phaseBlocks,
-            segmentosResponsables: responsabilidad.segments,
-            tiempoPorGrupo: responsabilidad.totals,
-            tiempoPorGrupoVisible: responsabilidad.displayTotals
+            phaseBlocks
         };
     }
 
@@ -683,87 +547,6 @@ class PrecontractualManager {
             .filter(block => block.count > 0 || block.variantKey || block.hasVariants)
             .sort((a, b) => a.orderIndex - b.orderIndex || (a.variantKey ? 1 : -1));
     }
-
-    computeResponsableDurations(events = [], etapaNombre = '') {
-        const phasesByNumber = new Map();
-
-        (events || []).forEach(evt => {
-            const phaseNumber = extractPhaseNumber(evt?.Fase);
-            if (Number.isNaN(phaseNumber)) {
-                return;
-            }
-            if (!phasesByNumber.has(phaseNumber)) {
-                phasesByNumber.set(phaseNumber, []);
-            }
-            phasesByNumber.get(phaseNumber).push(evt);
-        });
-
-        const phases = Array.from(phasesByNumber.entries()).map(([fase, phaseEvents]) => {
-            const fechas = phaseEvents.map(e => new Date(e.Fecha)).filter(d => !Number.isNaN(d.getTime()));
-            const fechaCierre = fechas.length ? new Date(Math.max(...fechas.map(d => d.getTime()))) : null;
-            const resp = getPhaseResponsible(etapaNombre, fase);
-            return {
-                fase,
-                fecha: fechaCierre,
-                responsable: resp.responsable,
-                grupo: resp.grupo,
-                responsables: resp.responsables,
-                grupos: resp.grupos
-            };
-        }).filter(p => p.fecha);
-
-        phases.sort((a, b) => a.fase - b.fase || a.fecha - b.fecha);
-
-        const segments = [];
-        const totals = {};
-        const displayTotals = {};
-
-        for (let i = 1; i < phases.length; i++) {
-            const prev = phases[i - 1];
-            const curr = phases[i];
-            if (!prev.fecha || !curr.fecha) {
-                continue;
-            }
-            const diffMs = curr.fecha - prev.fecha;
-            const days = Math.max(0, Math.round(diffMs / (1000 * 60 * 60 * 24)));
-            const gruposObjetivo = (curr.grupos && curr.grupos.length) ? curr.grupos : ['Sin asignar'];
-            const responsablesObjetivo = (curr.responsables && curr.responsables.length)
-                ? curr.responsables
-                : [curr.responsable || 'Sin responsable asignado'];
-
-            const shareCount = gruposObjetivo.length || 1;
-            const diasAsignados = Math.round((days / shareCount) * 10) / 10;
-
-            gruposObjetivo.forEach((grupo, idx) => {
-                const responsable = responsablesObjetivo[idx] || responsablesObjetivo[0] || 'Sin responsable asignado';
-                displayTotals[grupo] = (displayTotals[grupo] || 0) + days;
-                totals[grupo] = (totals[grupo] || 0) + diasAsignados;
-                segments.push({
-                    desdeFase: prev.fase,
-                    hastaFase: curr.fase,
-                    dias: days,
-                    diasAsignados,
-                    responsable,
-                    grupo,
-                    compartido: gruposObjetivo.length > 1,
-                    participantes: gruposObjetivo
-                });
-            });
-        }
-
-        return { segments, totals, displayTotals };
-    }
-
-    aggregateGroupTotals(etapas = [], field = 'tiempoPorGrupo') {
-        const totals = {};
-        (etapas || []).forEach(etapa => {
-            const map = etapa[field] || {};
-            Object.entries(map).forEach(([grupo, dias]) => {
-                totals[grupo] = (totals[grupo] || 0) + dias;
-            });
-        });
-        return totals;
-    }
     
     updateFilters() {
         // Obtener valores únicos para los filtros
@@ -777,19 +560,11 @@ class PrecontractualManager {
             candidateSelect.innerHTML += `<option value="${nombre}">${nombre}</option>`;
         });
         
-        // Actualizar select de etapas (mostrar sin número, mantener value con la etapa original para filtrado)
+        // Actualizar select de etapas
         const stageSelect = document.getElementById('stageFilter');
-        stageSelect.innerHTML = '';
-        const defaultOpt = document.createElement('option');
-        defaultOpt.value = '';
-        defaultOpt.textContent = 'Todas las etapas';
-        stageSelect.appendChild(defaultOpt);
-
+        stageSelect.innerHTML = '<option value="">Todas las etapas</option>';
         etapas.forEach(etapa => {
-            const opt = document.createElement('option');
-            opt.value = etapa; // mantener valor original para filtros
-            opt.textContent = stripLeadingNumber(etapa);
-            stageSelect.appendChild(opt);
+            stageSelect.innerHTML += `<option value="${etapa}">${etapa}</option>`;
         });
     }
     
@@ -822,23 +597,6 @@ class PrecontractualManager {
         
         this.updateMetrics();
         this.renderView();
-    }
-    
-    clearFilters() {
-        // Resetear todos los selects a su valor por defecto
-        document.getElementById('candidateFilter').value = '';
-        document.getElementById('stageFilter').value = '';
-        document.getElementById('statusFilter').value = '';
-        
-        // Mostrar todos los datos
-        this.filteredData = [...this.data];
-        
-        // Actualizar métricas y vista
-        this.updateMetrics();
-        this.renderView();
-        
-        // Mostrar mensaje de confirmación
-        this.showSuccess('Filtros limpiados correctamente');
     }
     
     updateMetrics() {
@@ -892,9 +650,6 @@ class PrecontractualManager {
                 break;
             case 'analytics':
                 this.renderAnalytics();
-                break;
-            case 'detallado':
-                this.renderDetallado();
                 break;
         }
     }
@@ -985,16 +740,7 @@ class PrecontractualManager {
                 const correccionesBadge = correccionesCount > 0 ? `<span class="stage-correcciones correccion">Correcciones: ${correccionesCount}</span>` : '';
                 const subsanacionBadge = subsanacionCount > 0 ? `<span class="stage-correcciones subsanacion">Subsanaciones: ${subsanacionCount}</span>` : '';
                 const ajusteBadge = ajusteCount > 0 ? `<span class="stage-correcciones ajuste">Ajustes: ${ajusteCount}</span>` : '';
-                
-                // Agregar información de responsables
-                const tiemposPorGrupo = etapa.tiempoPorGrupoVisible || etapa.tiempoPorGrupo || {};
-                const gruposActivos = Object.entries(tiemposPorGrupo).filter(([g, d]) => d > 0);
-                const responsablesBadges = gruposActivos.length > 0 ? gruposActivos.map(([grupo, dias]) => {
-                    const color = getGroupColor(grupo);
-                    return `<span class="stage-responsible-badge" style="background: ${color}20; border-color: ${color}; color: ${color};" title="${grupo}: ${dias} días">${grupo.substring(0, 4)}: ${dias}d</span>`;
-                }).join('') : '';
-                
-                const stageMetaContent = [intentoBadge, correccionesBadge, subsanacionBadge, ajusteBadge, responsablesBadges].filter(Boolean).join('');
+                const stageMetaContent = [intentoBadge, correccionesBadge, subsanacionBadge, ajusteBadge].filter(Boolean).join('');
                 const stageMetaHtml = stageMetaContent ? `<div class="stage-label-meta">${stageMetaContent}</div>` : '';
 
                 const phaseBlocks = etapa.phaseBlocks || this.buildPhaseBlocks(etapa.eventos || []);
@@ -1002,7 +748,7 @@ class PrecontractualManager {
                     const badge = block.variantBadge ? `<span class="phase-pill-badge ${block.variantKey || 'base'}">${block.variantBadge}</span>` : '';
                     const pillClass = block.variantClass ? ` ${block.variantClass}` : '';
                     const statusClass = block.status ? ` status-${block.status.toLowerCase().replace(/\s+/g, '-')}` : '';
-                    return `<span class="phase-pill${pillClass}${statusClass}">${stripLeadingNumber(block.displayLabel)}${badge}</span>`;
+                    return `<span class="phase-pill${pillClass}${statusClass}">${block.displayLabel}${badge}</span>`;
                 }).join('');
                 const phasePillsHtml = phasePills ? `<div class="stage-phase-pills">${phasePills}</div>` : '';
 
@@ -1010,7 +756,7 @@ class PrecontractualManager {
                     <div class="stage-wrapper">
                         <div class="stage-item">
                             <div class="stage-label tooltip" data-tooltip="Etapa ${etapaIndex + 1} de ${candidato.etapas.length}">
-                                ${stripLeadingNumber(etapa.etapa)}
+                                ${etapa.etapa}
                             </div>
                             ${stageMetaHtml}
                             <div class="stage-bar-container">
@@ -1118,7 +864,7 @@ class PrecontractualManager {
                     return `
                         <div class="fase-item${variantClass}${statusClass}" data-candidato="${candidato.persona_id}" data-etapa="${etapa.etapa}" data-fase="${block.baseLabel}" data-variant="${block.variantKey || 'base'}">
                             <div class="fase-header">
-                                <div class="fase-nombre">${stripLeadingNumber(block.displayLabel)}</div>
+                                <div class="fase-nombre">${block.displayLabel}</div>
                                 <div class="fase-estado ${estadoClass}">${estadoFase}</div>
                             </div>
                             <div class="fase-eventos-count">${eventosLabel}${fechaReferencia ? ` · ${fechaReferencia}` : ''}</div>
@@ -1128,37 +874,11 @@ class PrecontractualManager {
                     `;
                 }).join('');
                 
-                // Agregar desglose de responsables si existe
-                const tiemposPorGrupo = etapa.tiempoPorGrupoVisible || etapa.tiempoPorGrupo || {};
-                const gruposConTiempo = Object.entries(tiemposPorGrupo).filter(([g, d]) => d > 0);
-                let responsablesHtml = '';
-                if (gruposConTiempo.length > 0) {
-                    const responsablesList = gruposConTiempo.map(([grupo, dias]) => {
-                        const color = getGroupColor(grupo);
-                        const porcentaje = etapa.duracionDias > 0 ? Math.round((dias / etapa.duracionDias) * 100) : 0;
-                        return `
-                            <div class="etapa-responsible-item" style="border-left: 3px solid ${color};">
-                                <div class="etapa-responsible-name">${grupo}</div>
-                                <div class="etapa-responsible-stats">
-                                    <span>${dias} días</span>
-                                    <span class="etapa-responsible-percent">${porcentaje}%</span>
-                                </div>
-                            </div>
-                        `;
-                    }).join('');
-                    responsablesHtml = `
-                        <div class="etapa-responsables-section">
-                            <h6 class="etapa-responsables-title">Distribución por responsable</h6>
-                            ${responsablesList}
-                        </div>
-                    `;
-                }
-                
                 return `
                     <div class="etapa-card ${etapa.estado.toLowerCase().replace(' ', '-')}" data-candidato="${candidato.persona_id}" data-etapa="${etapa.etapa}">
                         <div class="etapa-header">
                             <div class="etapa-info">
-                                <h4 class="etapa-titulo">${stripLeadingNumber(etapa.etapa)}</h4>
+                                <h4 class="etapa-titulo">${etapa.etapa}</h4>
                                 <div class="etapa-metadata">
                                     <span class="etapa-duracion">
                                         <span class="material-icons">schedule</span>
@@ -1189,7 +909,6 @@ class PrecontractualManager {
                                     ${fasesHtml.length > 0 ? fasesHtml : '<p class="no-fases">No hay fases registradas</p>'}
                                 </div>
                             </div>
-                            ${responsablesHtml}
                         </div>
                     </div>
                 `;
@@ -1247,258 +966,6 @@ class PrecontractualManager {
         
         // Agregar event listeners para interactividad
         this.addProgresoEventListeners();
-    }
-
-    renderDetallado() {
-        const container = document.getElementById('detallado-content');
-        const resumen = document.getElementById('detalle-resumen');
-
-        if (!container) {
-            return;
-        }
-
-        if (this.filteredData.length === 0) {
-            container.innerHTML = `
-                <div class="detail-empty-state">
-                    <span class="material-icons" style="font-size: 4rem; margin-bottom: 1rem;">insights</span>
-                    <p style="font-size: 1.125rem; font-weight: 500; margin-bottom: 0.5rem;">No hay datos para mostrar</p>
-                    <p style="font-size: 0.875rem;">Ajusta filtros o espera a que existan fases registradas</p>
-                </div>
-            `;
-            if (resumen) {
-                resumen.textContent = '';
-            }
-            return;
-        }
-
-        const groupOrder = [
-            'OAPI',
-            'Secretaría General y Contratación',
-            'GAFC',
-            'Talento Humano',
-            'Fiduprevisora',
-            'Contratista',
-            'Sin asignar'
-        ];
-
-        const cards = this.filteredData.map((candidato, candIndex) => {
-            const total = Number(candidato.tiempoTotal || 0);
-            const baseTotals = { ...(candidato.tiempoPorGrupo || {}) };
-            const visibleTotals = { ...(candidato.tiempoPorGrupoVisible || candidato.tiempoPorGrupo || {}) };
-            const sumaAsignada = Object.values(baseTotals).reduce((a, b) => a + (Number(b) || 0), 0);
-            const brecha = Math.max(0, total - sumaAsignada);
-            if (brecha > 0) {
-                baseTotals['Sin asignar'] = (baseTotals['Sin asignar'] || 0) + brecha;
-            }
-
-            // Recopilar desglose de fases por grupo
-            const phasesByGroup = this.getPhaseBreakdownByGroup(candidato);
-
-            const groupRows = groupOrder.map((grupo, groupIndex) => {
-                const diasAsignados = Number(baseTotals[grupo] || 0);
-                const diasVisibles = Number(visibleTotals[grupo] || diasAsignados);
-                if (diasVisibles <= 0 && diasAsignados <= 0) return '';
-                const porcentaje = total > 0 ? Math.round((diasAsignados / total) * 100) : 0;
-                const diasCompartidos = Math.max(0, diasVisibles - diasAsignados);
-                const color = getGroupColor(grupo);
-                const groupId = `group-${candIndex}-${groupIndex}`;
-                const sharedNote = diasCompartidos > 0
-                    ? `<span class="detail-shared-note">Incluye ${diasCompartidos}d compartidos</span>`
-                    : '';
-                
-                // Obtener datos de este grupo
-                const groupData = phasesByGroup[grupo] || { phases: [], byResponsable: {}, totalsByResponsable: {} };
-                const phasesInGroup = groupData.phases || [];
-                const responsables = Object.keys(groupData.totalsByResponsable || {});
-                
-                // Resumen de responsables si hay más de uno
-                let responsableSummary = '';
-                if (responsables.length > 1) {
-                    const chips = responsables.map(resp => {
-                        const respDays = groupData.totalsByResponsable[resp] || 0;
-                        const respPercent = diasVisibles > 0 ? Math.round((respDays / diasVisibles) * 100) : 0;
-                        return `
-                            <div class="detail-responsible-chip">
-                                <span class="detail-responsible-name">${resp}</span>
-                                <span class="detail-responsible-days">${respDays}d (${respPercent}%)</span>
-                            </div>
-                        `;
-                    }).join('');
-                    responsableSummary = `
-                        <div class="detail-responsible-summary">
-                            ${chips}
-                        </div>
-                    `;
-                }
-                
-                // Lista de fases agrupadas por responsable
-                let phasesList = '';
-                if (responsables.length > 1) {
-                    // Mostrar agrupado por responsable
-                    phasesList = responsables.map(resp => {
-                        const respPhases = groupData.byResponsable[resp] || [];
-                        const respPhasesHtml = respPhases.map(phase => {
-                            const otrosParticipantes = (phase.participantes || []).filter(p => p !== grupo);
-                            const compartidoHtml = phase.compartido
-                                ? `<div class="detail-phase-shared">Compartido con ${otrosParticipantes.length ? otrosParticipantes.join(', ') : 'otro grupo'}</div>`
-                                : '';
-                            return `
-                            <div class="detail-phase-item">
-                                <div class="detail-phase-info">
-                                    <div class="detail-phase-name">${stripLeadingNumber(phase.etapa)} - Fase ${phase.desdeFase} → ${phase.hastaFase}</div>
-                                    <div class="detail-phase-range">Responsable: ${phase.responsable}</div>
-                                    ${compartidoHtml}
-                                </div>
-                                <div class="detail-phase-duration">
-                                    <div class="detail-phase-days">${phase.dias}</div>
-                                    <div class="detail-phase-label">días</div>
-                                </div>
-                            </div>
-                        `;
-                        }).join('');
-                        return `
-                            <div class="detail-responsible-section">
-                                <div class="detail-responsible-section-header">
-                                    <span class="material-icons" style="font-size: 1rem; color: #6b7280;">person</span>
-                                    <span class="detail-responsible-section-name">${resp}</span>
-                                    <span class="detail-responsible-section-count">(${respPhases.length} fase${respPhases.length !== 1 ? 's' : ''})</span>
-                                </div>
-                                ${respPhasesHtml}
-                            </div>
-                        `;
-                    }).join('');
-                } else {
-                    // Mostrar lista simple si solo hay un responsable
-                    phasesList = phasesInGroup.length > 0 ? phasesInGroup.map(phase => {
-                        const otrosParticipantes = (phase.participantes || []).filter(p => p !== grupo);
-                        const compartidoHtml = phase.compartido
-                            ? `<div class="detail-phase-shared">Compartido con ${otrosParticipantes.length ? otrosParticipantes.join(', ') : 'otro grupo'}</div>`
-                            : '';
-                        return `
-                        <div class="detail-phase-item">
-                            <div class="detail-phase-info">
-                                <div class="detail-phase-name">${stripLeadingNumber(phase.etapa)} - Fase ${phase.desdeFase} → ${phase.hastaFase}</div>
-                                <div class="detail-phase-range">Responsable: ${phase.responsable}</div>
-                                ${compartidoHtml}
-                            </div>
-                            <div class="detail-phase-duration">
-                                <div class="detail-phase-days">${phase.dias}</div>
-                                <div class="detail-phase-label">días</div>
-                            </div>
-                        </div>
-                    `;
-                    }).join('') : '<p class="detail-empty-state" style="padding: 12px;">No hay fases registradas</p>';
-                }
-
-                return `
-                    <div class="detail-group-item" data-group-id="${groupId}" onclick="this.classList.toggle('expanded')">
-                        <div class="detail-group-header">
-                            <div class="detail-group-name">
-                                <div class="detail-group-color-indicator" style="background: ${color};"></div>
-                                <span class="detail-group-label">${grupo}</span>
-                            </div>
-                            <div style="display: flex; align-items: center; gap: 12px;">
-                                <div class="detail-group-days">
-                                    <span>${diasVisibles}</span>
-                                    <span style="font-size: 0.85rem; color: #6b7280;">días</span>
-                                </div>
-                                <div class="detail-group-percentage">${porcentaje}%</div>
-                                <span class="material-icons detail-group-expand-icon">expand_more</span>
-                            </div>
-                        </div>
-                        ${sharedNote}
-                        <div class="detail-group-bar">
-                            <div class="detail-group-fill" style="width: ${porcentaje}%; background: ${color};"></div>
-                        </div>
-                        <div class="detail-group-breakdown">
-                            <div class="detail-breakdown-header">Desglose de fases (${phasesInGroup.length})</div>
-                            ${responsableSummary}
-                            <div class="detail-phase-list">
-                                ${phasesList}
-                            </div>
-                        </div>
-                    </div>
-                `;
-            }).filter(Boolean).join('');
-
-            return `
-                <div class="detail-card">
-                    <div class="detail-card-header">
-                        <div class="detail-candidate-info">
-                            <h3>${candidato.nombre}</h3>
-                            <p>${candidato.etapas.length} etapa${candidato.etapas.length !== 1 ? 's' : ''} procesadas</p>
-                        </div>
-                        <div class="detail-summary-stats">
-                            <div class="detail-stat">
-                                <div class="detail-stat-value">${total}</div>
-                                <div class="detail-stat-label">Días totales</div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="detail-groups-container">
-                        ${groupRows || '<p class="detail-empty-state">Sin tramos calculados</p>'}
-                    </div>
-                </div>
-            `;
-        }).join('');
-
-        container.innerHTML = cards;
-        if (resumen) {
-            const totalProcesos = this.filteredData.length;
-            resumen.textContent = `${totalProcesos} proceso${totalProcesos !== 1 ? 's' : ''} mostrados`;
-        }
-    }
-
-    getPhaseBreakdownByGroup(candidato) {
-        const byGroup = {};
-        
-        (candidato.etapas || []).forEach(etapa => {
-            const segments = etapa.segmentosResponsables || [];
-            segments.forEach(seg => {
-                const grupo = seg.grupo || 'Sin asignar';
-                if (!byGroup[grupo]) {
-                    byGroup[grupo] = {
-                        phases: [],
-                        byResponsable: {},
-                        totalsByResponsable: {}
-                    };
-                }
-                
-                const phase = {
-                    etapa: etapa.etapa,
-                    desdeFase: seg.desdeFase,
-                    hastaFase: seg.hastaFase,
-                    dias: seg.dias,
-                    diasAsignados: seg.diasAsignados,
-                    responsable: seg.responsable,
-                    compartido: !!seg.compartido,
-                    participantes: seg.participantes || []
-                };
-                
-                byGroup[grupo].phases.push(phase);
-                
-                // Agrupar por responsable dentro del grupo
-                const resp = seg.responsable || 'Sin responsable';
-                if (!byGroup[grupo].byResponsable[resp]) {
-                    byGroup[grupo].byResponsable[resp] = [];
-                }
-                byGroup[grupo].byResponsable[resp].push(phase);
-                
-                // Sumar días por responsable
-                byGroup[grupo].totalsByResponsable[resp] = 
-                    (byGroup[grupo].totalsByResponsable[resp] || 0) + seg.dias;
-            });
-        });
-
-        // Ordenar fases por días descendente dentro de cada grupo y responsable
-        Object.keys(byGroup).forEach(grupo => {
-            byGroup[grupo].phases.sort((a, b) => b.dias - a.dias);
-            Object.keys(byGroup[grupo].byResponsable).forEach(resp => {
-                byGroup[grupo].byResponsable[resp].sort((a, b) => b.dias - a.dias);
-            });
-        });
-
-        return byGroup;
     }
     
     addProgresoEventListeners() {
@@ -1598,18 +1065,16 @@ class PrecontractualManager {
     }
     
     renderAnalytics() {
-        this.renderAdvancedStats();
         this.renderStageChart();
         this.renderStatusChart();
-        this.renderGroupChart();
-        this.renderEfficiencyList();
         this.renderBottlenecks();
-        this.renderTrendChart();
         this.renderTimeRanking();
-        this.renderFastestRanking();
     }
     
-    getStageAverages() {
+    renderStageChart() {
+        const ctx = document.getElementById('stageChart').getContext('2d');
+        
+        // Calcular duración promedio por etapa
         const etapasData = new Map();
         
         this.filteredData.forEach(candidato => {
@@ -1621,51 +1086,11 @@ class PrecontractualManager {
             });
         });
         
-        return Array.from(etapasData.entries()).map(([etapa, tiempos]) => ({
-            etapa,
-            promedio: tiempos.reduce((a, b) => a + b, 0) / tiempos.length,
-            maximo: Math.max(...tiempos),
-            minimo: Math.min(...tiempos),
-            cantidad: tiempos.length
-        }));
-    }
-    
-    getGroupStats() {
-        const groupData = {};
-        
-        this.filteredData.forEach(candidato => {
-            const tiemposPorGrupo = candidato.tiempoPorGrupo || {};
-            Object.entries(tiemposPorGrupo).forEach(([grupo, dias]) => {
-                if (!groupData[grupo]) {
-                    groupData[grupo] = { totalDias: 0, casos: 0 };
-                }
-                groupData[grupo].totalDias += dias;
-                groupData[grupo].casos += 1;
-            });
+        const labels = Array.from(etapasData.keys());
+        const data = labels.map(etapa => {
+            const tiempos = etapasData.get(etapa);
+            return tiempos.reduce((a, b) => a + b, 0) / tiempos.length;
         });
-        
-        return Object.entries(groupData)
-            .map(([grupo, data]) => ({
-                grupo,
-                totalDias: data.totalDias,
-                casos: data.casos,
-                promedio: data.totalDias / data.casos
-            }))
-            .sort((a, b) => b.casos - a.casos);
-    }
-    
-    renderStageChart() {
-        const ctx = document.getElementById('stageChart').getContext('2d');
-        
-        const etapasData = this.getStageAverages();
-        
-        // Ordenar por promedio y tomar las top 10
-        const topEtapas = etapasData
-            .sort((a, b) => b.promedio - a.promedio)
-            .slice(0, 10);
-        
-        const labels = topEtapas.map(e => e.etapa);
-        const data = topEtapas.map(e => e.promedio);
         
         if (this.charts.stageChart) {
             this.charts.stageChart.destroy();
@@ -1678,62 +1103,25 @@ class PrecontractualManager {
                 datasets: [{
                     label: 'Días promedio',
                     data: data,
-                    backgroundColor: data.map(d => 
-                        d > 20 ? 'rgba(239, 68, 68, 0.8)' : 
-                        d > 10 ? 'rgba(251, 191, 36, 0.8)' : 
-                        'rgba(59, 130, 246, 0.8)'
-                    ),
-                    borderColor: data.map(d => 
-                        d > 20 ? 'rgba(239, 68, 68, 1)' : 
-                        d > 10 ? 'rgba(251, 191, 36, 1)' : 
-                        'rgba(59, 130, 246, 1)'
-                    ),
-                    borderWidth: 2,
-                    borderRadius: 6
+                    backgroundColor: 'rgba(59, 130, 246, 0.8)',
+                    borderColor: 'rgba(59, 130, 246, 1)',
+                    borderWidth: 1
                 }]
             },
             options: {
                 responsive: true,
-                maintainAspectRatio: true,
-                plugins: {
-                    legend: {
-                        display: false
-                    },
-                    tooltip: {
-                        callbacks: {
-                            afterLabel: function(context) {
-                                const index = context.dataIndex;
-                                const etapa = topEtapas[index];
-                                return [
-                                    `Casos: ${etapa.cantidad}`,
-                                    `Máximo: ${Math.round(etapa.maximo)} días`,
-                                    `Mínimo: ${Math.round(etapa.minimo)} días`
-                                ];
-                            }
-                        }
-                    }
-                },
                 scales: {
                     y: {
                         beginAtZero: true,
                         title: {
                             display: true,
-                            text: 'Días promedio',
-                            font: {
-                                weight: 'bold'
-                            }
-                        },
-                        grid: {
-                            color: 'rgba(0, 0, 0, 0.05)'
+                            text: 'Días'
                         }
                     },
                     x: {
-                        ticks: {
-                            maxRotation: 45,
-                            minRotation: 45
-                        },
-                        grid: {
-                            display: false
+                        title: {
+                            display: true,
+                            text: 'Etapas'
                         }
                     }
                 }
@@ -1746,10 +1134,6 @@ class PrecontractualManager {
         
         const enProceso = this.filteredData.filter(d => d.estadoGeneral === 'En proceso').length;
         const finalizados = this.filteredData.filter(d => d.estadoGeneral === 'Finalizado').length;
-        
-        // Actualizar leyenda
-        document.getElementById('legend-proceso').textContent = `En proceso: ${enProceso}`;
-        document.getElementById('legend-finalizados').textContent = `Finalizados: ${finalizados}`;
         
         if (this.charts.statusChart) {
             this.charts.statusChart.destroy();
@@ -1769,300 +1153,62 @@ class PrecontractualManager {
                         'rgba(251, 191, 36, 1)',
                         'rgba(16, 185, 129, 1)'
                     ],
-                    borderWidth: 3,
-                    hoverOffset: 10
+                    borderWidth: 2
                 }]
             },
             options: {
                 responsive: true,
-                maintainAspectRatio: false,
-                aspectRatio: 1,
-                cutout: '65%',
                 plugins: {
                     legend: {
-                        display: false
-                    },
-                    tooltip: {
-                        callbacks: {
-                            label: function(context) {
-                                const total = context.dataset.data.reduce((a, b) => a + b, 0);
-                                const value = context.parsed;
-                                const percentage = ((value / total) * 100).toFixed(1);
-                                return `${context.label}: ${value} (${percentage}%)`;
-                            }
-                        }
+                        position: 'bottom'
                     }
                 }
             }
         });
-    }
-    
-    renderGroupChart() {
-        const canvas = document.getElementById('groupChart');
-        if (!canvas) return;
-        
-        const ctx = canvas.getContext('2d');
-        
-        const groupStats = this.getGroupStats();
-        
-        const labels = groupStats.map(g => g.grupo);
-        const data = groupStats.map(g => g.totalDias);
-        const colors = labels.map(g => getGroupColor(g));
-        
-        if (this.charts.groupChart) {
-            this.charts.groupChart.destroy();
-        }
-        
-        this.charts.groupChart = new Chart(ctx, {
-            type: 'bar',
-            data: {
-                labels: labels,
-                datasets: [{
-                    label: 'Días totales',
-                    data: data,
-                    backgroundColor: colors.map(c => c + '80'),
-                    borderColor: colors,
-                    borderWidth: 2,
-                    borderRadius: 6
-                }]
-            },
-            options: {
-                indexAxis: 'y',
-                responsive: true,
-                maintainAspectRatio: true,
-                plugins: {
-                    legend: {
-                        display: false
-                    },
-                    tooltip: {
-                        callbacks: {
-                            afterLabel: function(context) {
-                                const index = context.dataIndex;
-                                const grupo = groupStats[index];
-                                return [
-                                    `Casos: ${grupo.casos}`,
-                                    `Promedio: ${Math.round(grupo.promedio)} días/caso`
-                                ];
-                            }
-                        }
-                    }
-                },
-                scales: {
-                    x: {
-                        beginAtZero: true,
-                        title: {
-                            display: true,
-                            text: 'Días acumulados',
-                            font: {
-                                weight: 'bold'
-                            }
-                        },
-                        grid: {
-                            color: 'rgba(0, 0, 0, 0.05)'
-                        }
-                    },
-                    y: {
-                        grid: {
-                            display: false
-                        }
-                    }
-                }
-            }
-        });
-    }
-    
-    renderEfficiencyList() {
-        const container = document.getElementById('efficiencyList');
-        if (!container) return;
-        
-        const groupStats = this.getGroupStats();
-        
-        let html = '';
-        groupStats.forEach((grupo, index) => {
-            const eficiencia = grupo.promedio <= 10 ? 'Alta' : grupo.promedio <= 20 ? 'Media' : 'Baja';
-            const eficienciaColor = eficiencia === 'Alta' ? 'text-green-600' : 
-                                    eficiencia === 'Media' ? 'text-yellow-600' : 'text-red-600';
-            const eficienciaIcon = eficiencia === 'Alta' ? 'trending_up' : 
-                                   eficiencia === 'Media' ? 'trending_flat' : 'trending_down';
-            
-            html += `
-                <div class="analytics-list-item ${index < groupStats.length - 1 ? 'border-b border-gray-100' : ''}">
-                    <div class="flex items-center justify-between">
-                        <div class="flex items-center">
-                            <div class="w-3 h-3 rounded-full mr-2" style="background-color: ${getGroupColor(grupo.grupo)}"></div>
-                            <div>
-                                <p class="font-medium text-sm">${grupo.grupo}</p>
-                                <p class="text-xs text-gray-500">${grupo.casos} casos</p>
-                            </div>
-                        </div>
-                        <div class="text-right">
-                            <div class="flex items-center ${eficienciaColor}">
-                                <span class="material-icons text-sm mr-1">${eficienciaIcon}</span>
-                                <span class="text-xs font-semibold">${eficiencia}</span>
-                            </div>
-                            <p class="text-xs text-gray-600">${Math.round(grupo.promedio)} d/caso</p>
-                        </div>
-                    </div>
-                </div>
-            `;
-        });
-        
-        container.innerHTML = html || '<p class="text-gray-500 text-sm text-center py-4">No hay datos</p>';
     }
     
     renderBottlenecks() {
         const container = document.getElementById('bottlenecksList');
         
-        const etapasData = this.getStageAverages();
+        // Calcular etapas más lentas
+        const etapasData = new Map();
         
-        const bottlenecks = etapasData
+        this.filteredData.forEach(candidato => {
+            candidato.etapas.forEach(etapa => {
+                if (!etapasData.has(etapa.etapa)) {
+                    etapasData.set(etapa.etapa, []);
+                }
+                etapasData.get(etapa.etapa).push(etapa.duracionDias);
+            });
+        });
+        
+        const bottlenecks = Array.from(etapasData.entries())
+            .map(([etapa, tiempos]) => ({
+                etapa,
+                promedio: tiempos.reduce((a, b) => a + b, 0) / tiempos.length,
+                maximo: Math.max(...tiempos),
+                cantidad: tiempos.length
+            }))
             .sort((a, b) => b.promedio - a.promedio)
             .slice(0, 5);
         
         let html = '';
         bottlenecks.forEach((item, index) => {
-            const severidad = item.promedio > 20 ? 'Crítico' : item.promedio > 15 ? 'Alto' : 'Moderado';
-            const severidadColor = severidad === 'Crítico' ? 'bg-red-100 text-red-700' : 
-                                   severidad === 'Alto' ? 'bg-orange-100 text-orange-700' : 
-                                   'bg-yellow-100 text-yellow-700';
-            
             html += `
-                <div class="analytics-bottleneck-item ${index < bottlenecks.length - 1 ? 'border-b border-gray-100' : ''}">
-                    <div class="flex items-start justify-between">
-                        <div class="flex-1">
-                            <div class="flex items-center mb-1">
-                                <span class="material-icons text-red-500 text-sm mr-1">warning</span>
-                                <p class="font-semibold text-sm">${item.etapa}</p>
-                            </div>
-                            <div class="flex items-center gap-3 text-xs text-gray-600">
-                                <span class="flex items-center">
-                                    <span class="material-icons text-xs mr-1">cases</span>
-                                    ${item.cantidad} casos
-                                </span>
-                                <span class="flex items-center">
-                                    <span class="material-icons text-xs mr-1">trending_up</span>
-                                    Máx: ${Math.round(item.maximo)} días
-                                </span>
-                                <span class="flex items-center">
-                                    <span class="material-icons text-xs mr-1">trending_down</span>
-                                    Mín: ${Math.round(item.minimo)} días
-                                </span>
-                            </div>
-                        </div>
-                        <div class="text-right ml-4">
-                            <p class="text-xl font-bold text-gray-900">${Math.round(item.promedio)}</p>
-                            <p class="text-xs text-gray-500">días prom.</p>
-                            <span class="inline-block mt-1 px-2 py-1 rounded text-xs font-semibold ${severidadColor}">
-                                ${severidad}
-                            </span>
-                        </div>
+                <div class="flex items-center justify-between py-3 ${index < bottlenecks.length - 1 ? 'border-b border-gray-200' : ''}">
+                    <div>
+                        <p class="font-medium">${item.etapa}</p>
+                        <p class="text-sm text-gray-600">${item.cantidad} casos</p>
+                    </div>
+                    <div class="text-right">
+                        <p class="font-semibold">${Math.round(item.promedio)} días</p>
+                        <p class="text-sm text-gray-600">máx: ${item.maximo} días</p>
                     </div>
                 </div>
             `;
         });
         
-        container.innerHTML = html || '<p class="text-gray-500 text-center py-4">No hay datos suficientes</p>';
-    }
-    
-    renderTrendChart() {
-        const ctx = document.getElementById('trendChart');
-        if (!ctx) return;
-        
-        // Obtener todas las etapas con sus promedios
-        const etapasData = this.getStageAverages();
-        
-        // Tomar las etapas más comunes (top 8-10)
-        const topEtapas = etapasData
-            .sort((a, b) => b.cantidad - a.cantidad) // Ordenar por cantidad de casos
-            .slice(0, 10);
-        
-        // Preparar labels más cortos
-        const labels = topEtapas.map(e => {
-            const nombre = e.etapa;
-            // Acortar nombres largos
-            if (nombre.length > 20) {
-                return nombre.substring(0, 20) + '...';
-            }
-            return nombre;
-        });
-        
-        const data = topEtapas.map(e => e.promedio);
-        
-        if (this.charts.trendChart) {
-            this.charts.trendChart.destroy();
-        }
-        
-        this.charts.trendChart = new Chart(ctx, {
-            type: 'line',
-            data: {
-                labels: labels,
-                datasets: [{
-                    label: 'Tiempo promedio por etapa',
-                    data: data,
-                    borderColor: 'rgba(59, 130, 246, 1)',
-                    backgroundColor: 'rgba(59, 130, 246, 0.1)',
-                    borderWidth: 3,
-                    fill: true,
-                    tension: 0.4,
-                    pointBackgroundColor: data.map(d => 
-                        d > 20 ? 'rgba(239, 68, 68, 1)' : 
-                        d > 10 ? 'rgba(251, 191, 36, 1)' : 
-                        'rgba(16, 185, 129, 1)'
-                    ),
-                    pointBorderColor: '#fff',
-                    pointBorderWidth: 2,
-                    pointRadius: 6,
-                    pointHoverRadius: 8
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: true,
-                plugins: {
-                    legend: {
-                        display: false
-                    },
-                    tooltip: {
-                        callbacks: {
-                            title: function(context) {
-                                const index = context[0].dataIndex;
-                                return topEtapas[index].etapa; // Nombre completo
-                            },
-                            label: function(context) {
-                                const index = context.dataIndex;
-                                const etapa = topEtapas[index];
-                                return [
-                                    `Promedio: ${Math.round(etapa.promedio)} días`,
-                                    `Casos: ${etapa.cantidad}`,
-                                    `Máximo: ${Math.round(etapa.maximo)} días`,
-                                    `Mínimo: ${Math.round(etapa.minimo)} días`
-                                ];
-                            }
-                        }
-                    }
-                },
-                scales: {
-                    y: {
-                        beginAtZero: true,
-                        title: {
-                            display: true,
-                            text: 'Días',
-                            font: {
-                                weight: 'bold'
-                            }
-                        },
-                        grid: {
-                            color: 'rgba(0, 0, 0, 0.05)'
-                        }
-                    },
-                    x: {
-                        grid: {
-                            display: false
-                        }
-                    }
-                }
-            }
-        });
+        container.innerHTML = html || '<p class="text-gray-500">No hay datos suficientes</p>';
     }
     
     renderTimeRanking() {
@@ -2074,115 +1220,24 @@ class PrecontractualManager {
         
         let html = '';
         ranking.forEach((candidato, index) => {
-            const medal = index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : '';
-            const statusColor = candidato.estadoGeneral === 'Finalizado' ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700';
-            
             html += `
-                <div class="analytics-ranking-item ${index < ranking.length - 1 ? 'border-b border-gray-100' : ''}">
-                    <div class="flex items-center justify-between">
-                        <div class="flex items-center flex-1">
-                            <span class="analytics-rank-badge ${index < 3 ? 'analytics-rank-badge-top' : ''}">${medal || (index + 1)}</span>
-                            <div class="ml-3 flex-1">
-                                <p class="font-semibold text-sm">${candidato.nombre}</p>
-                                <div class="flex items-center gap-2 text-xs text-gray-600 mt-1">
-                                    <span class="flex items-center">
-                                        <span class="material-icons text-xs mr-1">layers</span>
-                                        ${candidato.etapas.length} etapas
-                                    </span>
-                                    <span class="px-2 py-0.5 rounded text-xs font-medium ${statusColor}">
-                                        ${candidato.estadoGeneral}
-                                    </span>
-                                </div>
-                            </div>
+                <div class="flex items-center justify-between py-3 ${index < ranking.length - 1 ? 'border-b border-gray-200' : ''}">
+                    <div class="flex items-center">
+                        <span class="bg-gray-100 text-gray-600 text-sm font-semibold px-2 py-1 rounded mr-3">${index + 1}</span>
+                        <div>
+                            <p class="font-medium">${candidato.nombre}</p>
+                            <p class="text-sm text-gray-600">${candidato.etapas.length} etapas</p>
                         </div>
-                        <div class="text-right ml-3">
-                            <p class="text-lg font-bold text-gray-900">${candidato.tiempoTotal}</p>
-                            <p class="text-xs text-gray-500">días</p>
-                        </div>
+                    </div>
+                    <div class="text-right">
+                        <p class="font-semibold">${candidato.tiempoTotal} días</p>
+                        <span class="status-badge status-${candidato.estadoGeneral.toLowerCase().replace(' ', '-')}">${candidato.estadoGeneral}</span>
                     </div>
                 </div>
             `;
         });
         
-        container.innerHTML = html || '<p class="text-gray-500 text-center py-4">No hay datos para mostrar</p>';
-    }
-    
-    renderFastestRanking() {
-        const container = document.getElementById('fastestRankingList');
-        if (!container) return;
-        
-        // Solo procesos finalizados
-        const finalizados = this.filteredData.filter(d => d.estadoGeneral === 'Finalizado');
-        
-        const ranking = [...finalizados]
-            .sort((a, b) => a.tiempoTotal - b.tiempoTotal)
-            .slice(0, 10);
-        
-        let html = '';
-        ranking.forEach((candidato, index) => {
-            const medal = index === 0 ? '🏆' : index === 1 ? '⭐' : index === 2 ? '✨' : '';
-            
-            html += `
-                <div class="analytics-ranking-item ${index < ranking.length - 1 ? 'border-b border-gray-100' : ''}">
-                    <div class="flex items-center justify-between">
-                        <div class="flex items-center flex-1">
-                            <span class="analytics-rank-badge analytics-rank-badge-success">${medal || (index + 1)}</span>
-                            <div class="ml-3 flex-1">
-                                <p class="font-semibold text-sm">${candidato.nombre}</p>
-                                <div class="flex items-center gap-2 text-xs text-gray-600 mt-1">
-                                    <span class="flex items-center">
-                                        <span class="material-icons text-xs mr-1">speed</span>
-                                        ${candidato.etapas.length} etapas
-                                    </span>
-                                    <span class="text-green-600 font-medium">
-                                        ⚡ Rápido
-                                    </span>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="text-right ml-3">
-                            <p class="text-lg font-bold text-green-600">${candidato.tiempoTotal}</p>
-                            <p class="text-xs text-gray-500">días</p>
-                        </div>
-                    </div>
-                </div>
-            `;
-        });
-        
-        container.innerHTML = html || '<p class="text-gray-500 text-center py-4">No hay procesos finalizados</p>';
-    }
-    
-    renderAdvancedStats() {
-        const tiemposTotales = this.filteredData.map(d => d.tiempoTotal).filter(t => t > 0);
-        
-        if (tiemposTotales.length === 0) {
-            document.getElementById('stat-max-time').textContent = '-';
-            document.getElementById('stat-min-time').textContent = '-';
-            document.getElementById('stat-median-time').textContent = '-';
-            document.getElementById('stat-std-dev').textContent = '-';
-            return;
-        }
-        
-        // Máximo
-        const max = Math.max(...tiemposTotales);
-        document.getElementById('stat-max-time').textContent = `${max}`;
-        
-        // Mínimo
-        const min = Math.min(...tiemposTotales);
-        document.getElementById('stat-min-time').textContent = `${min}`;
-        
-        // Mediana
-        const sorted = [...tiemposTotales].sort((a, b) => a - b);
-        const median = sorted.length % 2 === 0 
-            ? (sorted[sorted.length / 2 - 1] + sorted[sorted.length / 2]) / 2 
-            : sorted[Math.floor(sorted.length / 2)];
-        document.getElementById('stat-median-time').textContent = `${Math.round(median)}`;
-        
-        // Desviación estándar
-        const mean = tiemposTotales.reduce((a, b) => a + b, 0) / tiemposTotales.length;
-        const variance = tiemposTotales.reduce((sum, val) => sum + Math.pow(val - mean, 2), 0) / tiemposTotales.length;
-        const stdDev = Math.sqrt(variance);
-        document.getElementById('stat-std-dev').textContent = `${Math.round(stdDev)}`;
+        container.innerHTML = html || '<p class="text-gray-500">No hay datos para mostrar</p>';
     }
     
     showLoading(show, message = 'Cargando datos...') {
@@ -2198,6 +1253,123 @@ class PrecontractualManager {
                 loading.classList.add('hidden');
             }
         }
+    }
+    
+    async loadSampleData() {
+    this.showLoading(true, 'Generando datos de prueba...');
+        
+        try {
+            // Simular datos de prueba
+            const samplePrecontractual = this.generateSamplePrecontractualData();
+            const samplePersonas = this.generateSamplePersonasData();
+            
+            // Procesar datos simulados
+            this.data = this.processData(samplePrecontractual, samplePersonas);
+            this.filteredData = [...this.data];
+            
+            // Actualizar interfaz
+            this.updateFilters();
+            this.updateMetrics();
+            this.renderView();
+            
+            // Mostrar mensaje de éxito
+            this.showSuccess('Datos de prueba cargados correctamente');
+            
+        } catch (error) {
+            console.error('Error loading sample data:', error);
+            this.showError('Error al cargar los datos de prueba');
+        } finally {
+            this.showLoading(false);
+        }
+    }
+    
+    generateSamplePrecontractualData() {
+        const personas = ['PERS-001', 'PERS-002', 'PERS-003', 'PERS-004', 'PERS-005'];
+        const etapas = ['Creación', 'Solicitud CDP', 'Exámenes médicos', 'Contratación', 'Finalización'];
+        const fases = {
+            'Creación': ['10 Inicio', '20 Elaboración', '30 Revisión', '40 Finalización'],
+            'Solicitud CDP': ['10 Solicitud', '20 Revisión presupuestal', '30 Aprobación'],
+            'Exámenes médicos': ['10 Programación', '20 Realización', '30 Resultados'],
+            'Contratación': ['10 Elaboración contrato', '20 Revisión jurídica', '30 Firma'],
+            'Finalización': ['10 Entrega documentos', '20 Cierre administrativo']
+        };
+        
+        const eventos = [];
+        let eventId = 1;
+        
+        personas.forEach(personaId => {
+            etapas.forEach((etapa, etapaIndex) => {
+                const fasesEtapa = fases[etapa];
+                const fechaBaseEtapa = new Date();
+                fechaBaseEtapa.setDate(fechaBaseEtapa.getDate() - (30 * (etapas.length - etapaIndex)));
+                
+                fasesEtapa.forEach((fase, faseIndex) => {
+                    const fechaEvento = new Date(fechaBaseEtapa);
+                    fechaEvento.setDate(fechaEvento.getDate() + (faseIndex * Math.random() * 5));
+                    
+                    // Determinar estado basado en la fecha
+                    const esUltimaFase = faseIndex === fasesEtapa.length - 1;
+                    const esEtapaReciente = etapaIndex >= etapas.length - 2;
+                    const estado = esUltimaFase && !esEtapaReciente ? 'Finalizado' : 
+                                  Math.random() > 0.3 ? 'Finalizado' : 'En proceso';
+                    
+                    eventos.push({
+                        pre_id: `PRE-${eventId++}`,
+                        persona_id: personaId,
+                        Etapa: etapa,
+                        Fase: fase,
+                        Estado: estado,
+                        Evento: faseIndex === 0 ? 'Inicio' : (esUltimaFase ? 'Finalización' : 'Avance'),
+                        Intento: 1,
+                        Fecha: fechaEvento.toISOString().split('T')[0],
+                        Responsable: 'admin@ungrd.gov.co',
+                        Observaciones: `Evento ${faseIndex + 1} de la etapa ${etapa}`,
+                        Evidencia_URL: ''
+                    });
+
+                    if (!esUltimaFase && Math.random() < 0.2) {
+                        const variantes = ['Solicitud de Correccion', 'Solicitud de Subsanacion', 'Solicitud de Ajuste'];
+                        const varianteSeleccionada = variantes[Math.floor(Math.random() * variantes.length)];
+                        const varianteFecha = new Date(fechaEvento);
+                        varianteFecha.setDate(varianteFecha.getDate() + Math.floor(Math.random() * 3) + 1);
+
+                        eventos.push({
+                            pre_id: `PRE-${eventId++}`,
+                            persona_id: personaId,
+                            Etapa: etapa,
+                            Fase: fase,
+                            Estado: 'En proceso',
+                            Evento: varianteSeleccionada,
+                            Intento: 1,
+                            Fecha: varianteFecha.toISOString().split('T')[0],
+                            Responsable: 'admin@ungrd.gov.co',
+                            Observaciones: `${varianteSeleccionada} para la fase ${fase}`,
+                            Evidencia_URL: ''
+                        });
+                    }
+                });
+            });
+        });
+        
+        return eventos;
+    }
+    
+    generateSamplePersonasData() {
+        const nombres = [
+            'Juan Carlos Rodríguez Pérez',
+            'María Elena Gómez Vargas',
+            'Luis Fernando Castro López',
+            'Ana Patricia Jiménez Morales',
+            'Carlos Eduardo Vargas Sánchez'
+        ];
+        
+        return nombres.map((nombre, index) => ({
+            persona_id: `PERS-${String(index + 1).padStart(3, '0')}`,
+            nombre_completo: nombre,
+            cedula: `1000000${index + 1}`,
+            email: `${nombre.toLowerCase().replace(/\s+/g, '.')}@example.com`,
+            telefono: `300${Math.floor(Math.random() * 1000000).toString().padStart(7, '0')}`
+        }));
     }
     
     showError(message) {
