@@ -85,3 +85,22 @@ export function showMessage(message, type='info', ms=3500){
  * @type {Object}
  */
 export const UI = { toast, showMessage, openModal, closeModal };
+
+/**
+ * Quita un prefijo numérico de una etiqueta de fase/etapa para uso visual.
+ * Ejemplos: "1. Documentación" -> "Documentación", "1.1. Subfase" -> "Subfase"
+ * No modifica la cadena original en los datos; solo devuelve una versión para mostrar.
+ * @param {string} label
+ * @returns {string}
+ */
+export function stripLeadingNumber(label){
+	if(label === null || label === undefined) return label;
+	try{
+		const s = String(label);
+		// Coincide con prefijos como "1.", "1.1.", "1-2.", "1)" etc.
+		return s.replace(/^\s*(?:\d+(?:[\.\-]\d+)*[\.\-]?)\s*/, '');
+	}catch(e){ return label; }
+}
+
+// Incluir en el objeto UI para compatibilidad
+UI.stripLeadingNumber = stripLeadingNumber;
